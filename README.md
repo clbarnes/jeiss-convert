@@ -35,9 +35,3 @@ optional arguments:
   -h, --help        show this help message and exit
   -d, --delete-dat  Delete the .dat file if the check succeeds
 ```
-not exist
-
-optional arguments:
-  -h, --help        show this help message and exit
-  -d, --delete-dat  Delete the .dat file if the check succeeds
-```
