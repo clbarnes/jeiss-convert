@@ -13,7 +13,7 @@ setup(
     long_description=readme,
     long_description_content_type="text/markdown",
     packages=find_packages(include=["jeiss_convert"]),
-    install_requires=[],
+    install_requires=["numpy", "h5py"],
     python_requires=">=3.8, <4.0",
     classifiers=[
         "Development Status :: 3 - Alpha",
