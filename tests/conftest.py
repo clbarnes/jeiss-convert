@@ -1,8 +1,8 @@
-from pathlib import Path
-import pytest
-import pooch
 import csv
+from pathlib import Path
 
+import pooch
+import pytest
 
 project_dir = Path(__file__).resolve().parent.parent
 spec_dir = project_dir / "jeiss_convert" / "jeiss-specs"

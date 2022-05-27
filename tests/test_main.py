@@ -1,5 +1,6 @@
-from jeiss_convert import verify, convert
 from pathlib import Path
+
+from jeiss_convert import convert, verify
 
 
 def test_importable():

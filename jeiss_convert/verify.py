@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-from argparse import ArgumentParser
-from pathlib import Path
 import hashlib
 import sys
+from argparse import ArgumentParser
+from pathlib import Path
 
 from .utils import hdf5_to_bytes
 

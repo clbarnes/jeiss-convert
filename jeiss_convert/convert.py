@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
+import sys
 from argparse import ArgumentParser
 from pathlib import Path
-import sys
 
 from .utils import dat_to_hdf5
 
