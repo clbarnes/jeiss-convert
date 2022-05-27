@@ -61,9 +61,7 @@ def main(args=None):
     if parsed.compression is not None:
         ds_kwargs.update(parsed.compression)
 
-    dat_to_hdf5(
-        parsed.dat, parsed.hdf5, parsed.group, ds_kwargs=ds_kwargs
-    )
+    dat_to_hdf5(parsed.dat, parsed.hdf5, parsed.group, ds_kwargs=ds_kwargs)
     return 0
 
 
