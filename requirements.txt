@@ -1,0 +1,15 @@
+numpy
+h5py
+
+# dev
+
+pooch
+black
+flake8
+isort
+mypy
+pdoc3
+pytest
+setuptools
+setuptools-scm
+wheel
