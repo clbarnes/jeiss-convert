@@ -5,8 +5,7 @@ Convert Jeiss .dat files
 ## Usage
 
 ```_dat2hdf5
-usage: dat2hdf [-h] [-a {1,2,3,4}] [-c CHUNKS] [-z COMPRESSION]
-               dat hdf5 [group]
+usage: dat2hdf [-h] [-c CHUNKS] [-z COMPRESSION] dat hdf5 [group]
 
 positional arguments:
   dat                   Path to a .dat file
@@ -15,8 +14,6 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  -a {1,2,3,4}, --analog-input {1,2,3,4}
-                        Which analog inputs to include (default all available)
   -c CHUNKS, --chunks CHUNKS
                         Chunking scheme (default none) as comma-separated
                         integers in XY, or 'auto' for automatic.
@@ -33,6 +30,12 @@ positional arguments:
   hdf5              Path to HDF5 file; may exist
   group             HDF5 group within the given file, default root; otherwise
                     must not exist
+
+optional arguments:
+  -h, --help        show this help message and exit
+  -d, --delete-dat  Delete the .dat file if the check succeeds
+```
+not exist
 
 optional arguments:
   -h, --help        show this help message and exit
