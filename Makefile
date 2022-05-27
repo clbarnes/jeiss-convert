@@ -33,3 +33,8 @@ clean-docs:
 docs: clean-docs
 	mkdir -p docs \
 	&& pdoc --html --output-dir docs jeiss-convert
+
+.PHONY: readme
+readme:
+	dat2hdf5 --help | p2c --tgt _dat2hdf5 README.md
+	dat2hdf5-verify --help | p2c --tgt _dat2hdf5-verify README.md

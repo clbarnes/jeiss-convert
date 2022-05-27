@@ -3,6 +3,7 @@ h5py
 
 # dev
 
+pip2codeblock
 pooch
 black
 flake8

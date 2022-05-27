@@ -44,13 +44,21 @@ def main(args=None):
         "-c",
         "--chunks",
         type=parse_chunks,
-        help="Chunking scheme (default none) as comma-separated integers in XY, or 'auto' for automatic.",
+        help=(
+            "Chunking scheme (default none) "
+            "as comma-separated integers in XY, "
+            "or 'auto' for automatic."
+        ),
     )
     parser.add_argument(
         "-z",
         "--compression",
         type=parse_compression,
-        help="Compression to use (default none); should be 'lzf' or 'gzip'. Gzip can be suffixed with the level 0-9.",
+        help=(
+            "Compression to use (default none); "
+            "should be 'lzf' or 'gzip'. "
+            "Gzip can be suffixed with the level 0-9."
+        ),
     )
 
     parsed = parser.parse_args(args)
