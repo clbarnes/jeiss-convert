@@ -149,17 +149,10 @@ def dat_to_hdf5(
     dat_path: Path,
     hdf5_path: Path,
     hdf5_group=None,
-    inputs=None,
     ds_kwargs=None,
 ):
-    all_inputs = [1, 2, 3, 4]
     if ds_kwargs is None:
         ds_kwargs = dict()
-    if inputs is not None:
-        if np.isscalar(inputs):
-            inputs = [inputs]
-        if set(inputs) - set(all_inputs):
-            raise ValueError("Invalid inputs: must be 1-4 inclusive")
 
     if hdf5_group is None:
         hdf5_group = "/"
@@ -168,16 +161,10 @@ def dat_to_hdf5(
 
     ds_to_channel = dict()
     max_channel = 0
-    for input_id in all_inputs:
+    for input_id in range(1, 5):
         ds = f"AI{input_id}"
-        exists = bool(all_data.meta[ds])
 
-        if inputs is not None:
-            if input_id not in inputs:
-                continue
-            if not exists:
-                raise ValueError(f"Requested input {input_id} does not exist")
-        if exists:
+        if all_data.meta[ds]:
             ds_to_channel[ds] = max_channel
             max_channel += 1
 

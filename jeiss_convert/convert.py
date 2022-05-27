@@ -33,14 +33,6 @@ def main(args=None):
         "group", nargs="?", help="HDF5 group within the given file; must not exist"
     )
     parser.add_argument(
-        "-a",
-        "--analog-input",
-        action="append",
-        type=int,
-        choices=[1, 2, 3, 4],
-        help="Which analog inputs to include (default all available)",
-    )
-    parser.add_argument(
         "-c",
         "--chunks",
         type=parse_chunks,
@@ -70,7 +62,7 @@ def main(args=None):
         ds_kwargs.update(parsed.compression)
 
     dat_to_hdf5(
-        parsed.dat, parsed.hdf5, parsed.group, parsed.analog_input, ds_kwargs=ds_kwargs
+        parsed.dat, parsed.hdf5, parsed.group, ds_kwargs=ds_kwargs
     )
     return 0
 
