@@ -77,7 +77,7 @@ def main(args=None):
         "-s",
         "--strict",
         action="store_true",
-        help="Check for identity of bytes rather than hash (slow and unnecessary)"
+        help="Check for identity of bytes rather than hash (slow and unnecessary)",
     )
     parser.add_argument(
         "--write-dat",
@@ -86,7 +86,7 @@ def main(args=None):
             "Instead of checking the HDF5 for its identity "
             "with an existing dat, write out the calculated dat. "
             "Comes with an interactive warning. Don't do this."
-        )
+        ),
     )
     parsed = parser.parse_args(args)
     if parsed.write_dat:

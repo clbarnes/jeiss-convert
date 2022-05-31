@@ -11,8 +11,8 @@ def test_importable():
 
 def test_convert_verify(dat_path, tmpdir):
     hdf5_path = Path(tmpdir / "data.hdf5")
-    status = convert.main([str(dat_path), str(hdf5_path)])
-    assert status == 0
+    conv_status = convert.main([str(dat_path), str(hdf5_path)])
+    assert conv_status == 0
     assert hdf5_path.is_file()
-    verified = verify.main([str(dat_path), str(hdf5_path)])
-    assert verified == 0
+    verif_status = verify.main([str(dat_path), str(hdf5_path)])
+    assert verif_status == 0
