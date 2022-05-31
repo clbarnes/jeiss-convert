@@ -57,6 +57,30 @@ def main(args=None):
             "Gzip can be suffixed with the level 0-9."
         ),
     )
+    parser.add_argument(
+        "-B",
+        "--byteshuffle",
+        action="store_true",
+        help=(
+            "Apply the byteshuffle filter, "
+            "which may decrease size of compressed data."
+        )
+    )
+    parser.add_argument(
+        "-o",
+        "--scale-offset",
+        action="store_true",
+        help=(
+            "Apply the scale-offset filter, "
+            "which may decrease size of chunked data."
+        )
+    )
+    parser.add_argument(
+        "-f",
+        "--fletcher32",
+        action="store_true",
+        help="Checksum each chunk to allow detection of corruption",
+    )
 
     parsed = parser.parse_args(args)
 
@@ -65,6 +89,12 @@ def main(args=None):
         ds_kwargs["chunks"] = parsed.chunks
     if parsed.compression is not None:
         ds_kwargs.update(parsed.compression)
+    if parsed.scale_offset:
+        ds_kwargs["scaleoffset"] = 0
+    if parsed.shuffle:
+        ds_kwargs["shuffle"] = True
+    if parsed.fletcher32:
+        ds_kwargs["fletcher32"]
 
     dat_to_hdf5(parsed.dat, parsed.hdf5, parsed.group, ds_kwargs=ds_kwargs)
     return 0
