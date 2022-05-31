@@ -26,8 +26,8 @@ setup(
     setup_requires=["setuptools_scm"],
     entry_points={
         "console_scripts": [
-            "dat2hdf5=jeiss_convert.convert:main",
-            "dat2hdf5-verify=jeiss_convert.verify:main",
+            "dat2hdf5=jeiss_convert.convert:_main",
+            "dat2hdf5-verify=jeiss_convert.verify:_main",
         ]
     },
     package_data={"": ["**/*.tsv"]},

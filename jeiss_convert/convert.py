@@ -65,5 +65,9 @@ def main(args=None):
     return 0
 
 
+def _main(args=None):
+    sys.exit(main(args))
+
+
 if __name__ == "__main__":
-    sys.exit(main())
+    _main()
