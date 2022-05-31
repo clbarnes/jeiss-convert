@@ -23,7 +23,7 @@ optional arguments:
 ```
 
 ```_dat2hdf5-verify
-usage: dat2hdf-verify [-h] [-d] dat hdf5 [group]
+usage: dat2hdf-verify [-h] [-d] [-s] [--write-dat] dat hdf5 [group]
 
 positional arguments:
   dat               Path to a .dat file
@@ -34,4 +34,9 @@ positional arguments:
 optional arguments:
   -h, --help        show this help message and exit
   -d, --delete-dat  Delete the .dat file if the check succeeds
+  -s, --strict      Check for identity of bytes rather than hash (slow and
+                    unnecessary)
+  --write-dat       Instead of checking the HDF5 for its identity with an
+                    existing dat, write out the calculated dat. Comes with an
+                    interactive warning. Don't do this.
 ```
