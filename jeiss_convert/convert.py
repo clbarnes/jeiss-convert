@@ -57,12 +57,13 @@ def main(args=None):
             "Gzip can be suffixed with the level 0-9."
         ),
     )
+    # leave -b for bitshuffle
     parser.add_argument(
         "-B",
-        "--byteshuffle",
+        "--byte-shuffle",
         action="store_true",
         help=(
-            "Apply the byteshuffle filter, "
+            "Apply the byte shuffle filter, "
             "which may decrease size of compressed data."
         ),
     )
@@ -90,7 +91,7 @@ def main(args=None):
         ds_kwargs.update(parsed.compression)
     if parsed.scale_offset:
         ds_kwargs["scaleoffset"] = 0
-    if parsed.byteshuffle:
+    if parsed.byte_shuffle:
         ds_kwargs["shuffle"] = True
     if parsed.fletcher32:
         ds_kwargs["fletcher32"]

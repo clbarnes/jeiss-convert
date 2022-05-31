@@ -25,7 +25,7 @@ optional arguments:
   -z COMPRESSION, --compression COMPRESSION
                         Compression to use (default none); should be 'lzf' or
                         'gzip'. Gzip can be suffixed with the level 0-9.
-  -B, --byteshuffle     Apply the byteshuffle filter, which may decrease size
+  -B, --byte-shuffle    Apply the byte shuffle filter, which may decrease size
                         of compressed data.
   -o, --scale-offset    Apply the scale-offset filter, which may decrease size
                         of chunked data.
