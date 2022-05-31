@@ -35,7 +35,8 @@ def write_dat(fpath: Path, hdf5_path, group=None):
     warn(
         "HDF5 files are self-documenting and widely supported. "
         "Dat files are not. "
-        "Converting from dat to HDF5 is recommended.\n"
+        "Converting from dat to HDF5 is recommended. "
+        "Converting from HDF5 to dat is not."
     )
     response = input(
         "Are you sure you want to create a new dat file? yes/[no] "
@@ -46,7 +47,7 @@ def write_dat(fpath: Path, hdf5_path, group=None):
             return 0
         warn(
             "Interpreting response non-'yes' response "
-            "'{response}' as negative, exiting"
+            f"'{response}' as negative, exiting"
         )
         return 2
 
