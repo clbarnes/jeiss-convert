@@ -64,16 +64,15 @@ def main(args=None):
         help=(
             "Apply the byteshuffle filter, "
             "which may decrease size of compressed data."
-        )
+        ),
     )
     parser.add_argument(
         "-o",
         "--scale-offset",
         action="store_true",
         help=(
-            "Apply the scale-offset filter, "
-            "which may decrease size of chunked data."
-        )
+            "Apply the scale-offset filter, " "which may decrease size of chunked data."
+        ),
     )
     parser.add_argument(
         "-f",
@@ -91,7 +90,7 @@ def main(args=None):
         ds_kwargs.update(parsed.compression)
     if parsed.scale_offset:
         ds_kwargs["scaleoffset"] = 0
-    if parsed.shuffle:
+    if parsed.byteshuffle:
         ds_kwargs["shuffle"] = True
     if parsed.fletcher32:
         ds_kwargs["fletcher32"]
