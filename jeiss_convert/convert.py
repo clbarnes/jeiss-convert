@@ -72,7 +72,7 @@ def main(args=None):
         "--scale-offset",
         action="store_true",
         help=(
-            "Apply the scale-offset filter, " "which may decrease size of chunked data."
+            "Apply the scale-offset filter, which may decrease size of chunked data."
         ),
     )
     parser.add_argument(
