@@ -7,6 +7,10 @@ Convert Jeiss .dat files
 ```_dat2hdf5
 usage: dat2hdf [-h] [-c CHUNKS] [-z COMPRESSION] dat hdf5 [group]
 
+Convert a Jeiss FIBSEM .dat file into a standard HDF5, preserving all known
+metadata as group attributes, as well as storing the raw header and footer
+bytes.
+
 positional arguments:
   dat                   Path to a .dat file
   hdf5                  Path to HDF5 file; may exist
@@ -24,6 +28,9 @@ optional arguments:
 
 ```_dat2hdf5-verify
 usage: dat2hdf-verify [-h] [-d] [-s] [--write-dat] dat hdf5 [group]
+
+Verify that the contents of an HDF5 container are identical to an existing
+Jeiss FIBSEM .dat file, so that the .dat can be safely deleted.
 
 positional arguments:
   dat               Path to a .dat file

@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+"""
+Verify that the contents of an HDF5 container are identical
+to an existing Jeiss FIBSEM .dat file,
+so that the .dat can be safely deleted.
+"""
 import hashlib
 import sys
 from argparse import ArgumentParser
@@ -59,7 +64,7 @@ def read_bytes(fpath: Path):
 
 
 def main(args=None):
-    parser = ArgumentParser("dat2hdf-verify")
+    parser = ArgumentParser("dat2hdf-verify", description=__doc__)
     parser.add_argument("dat", type=Path, help="Path to a .dat file")
     parser.add_argument("hdf5", type=Path, help="Path to HDF5 file; may exist")
     parser.add_argument(
