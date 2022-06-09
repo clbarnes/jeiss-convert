@@ -65,7 +65,7 @@ def read_bytes(fpath: Path):
 
 
 def main(args=None):
-    parser = ArgumentParser("dat2hdf-verify", description=__doc__)
+    parser = ArgumentParser("dat2hdf5-verify", description=__doc__)
     parser.add_argument("dat", type=Path, help="Path to a .dat file")
     parser.add_argument("hdf5", type=Path, help="Path to HDF5 file; may exist")
     parser.add_argument(

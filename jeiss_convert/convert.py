@@ -38,7 +38,7 @@ def parse_compression(s: str):
 
 
 def main(args=None):
-    parser = ArgumentParser("dat2hdf", description=__doc__)
+    parser = ArgumentParser("dat2hdf5", description=__doc__)
     parser.add_argument("dat", type=Path, help="Path to a .dat file")
     parser.add_argument("hdf5", type=Path, help="Path to HDF5 file; may exist")
     parser.add_argument(
