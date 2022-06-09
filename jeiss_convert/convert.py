@@ -14,7 +14,14 @@ from .utils import dat_to_hdf5
 def parse_chunks(s: str):
     if s == "auto":
         return True
-    return tuple(int(i.strip()) for i in s.split(","))
+    tup = tuple(int(i.strip()) for i in s.split(","))
+    if len(tup) == 1:
+        tup += tup
+    if len(tup) != 2:
+        raise ValueError(
+            "Chunks must be 'auto', a single integer, or two comma-separated integers"
+        )
+    return tup
 
 
 def parse_compression(s: str):
@@ -43,7 +50,8 @@ def main(args=None):
         type=parse_chunks,
         help=(
             "Chunking scheme (default none) "
-            "as comma-separated integers in XY, "
+            "as a single integer for a square chunk, "
+            "comma-separated integers in XY, "
             "or 'auto' for automatic."
         ),
     )
