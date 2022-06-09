@@ -5,8 +5,8 @@ Convert Jeiss .dat files
 ## Usage
 
 ```_dat2hdf5
-usage: dat2hdf [-h] [-c CHUNKS] [-z COMPRESSION] [-B] [-o] [-f]
-               dat hdf5 [group]
+usage: dat2hdf5 [-h] [-c CHUNKS] [-z COMPRESSION] [-B] [-o] [-f]
+                dat hdf5 [group]
 
 Convert a Jeiss FIBSEM .dat file into a standard HDF5, preserving all known
 metadata as group attributes, as well as storing the raw header and footer
@@ -20,8 +20,9 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   -c CHUNKS, --chunks CHUNKS
-                        Chunking scheme (default none) as comma-separated
-                        integers in XY, or 'auto' for automatic.
+                        Chunking scheme (default none) as a single integer for
+                        a square chunk, comma-separated integers in XY, or
+                        'auto' for automatic.
   -z COMPRESSION, --compression COMPRESSION
                         Compression to use (default none); should be 'lzf' or
                         'gzip'. Gzip can be suffixed with the level 0-9.
@@ -33,7 +34,7 @@ optional arguments:
 ```
 
 ```_dat2hdf5-verify
-usage: dat2hdf-verify [-h] [-d] [-s] [--write-dat] dat hdf5 [group]
+usage: dat2hdf5-verify [-h] [-d] [-s] [--write-dat] dat hdf5 [group]
 
 Verify that the contents of an HDF5 container are identical to an existing
 Jeiss FIBSEM .dat file, so that the .dat can be safely deleted.
