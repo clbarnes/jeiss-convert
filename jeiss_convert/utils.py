@@ -4,6 +4,7 @@ from pathlib import Path
 
 import h5py
 import numpy as np
+from .version import version
 
 spec_dir = Path(__file__).resolve().parent / "jeiss-specs" / "specs"
 
@@ -177,6 +178,7 @@ def dat_to_hdf5(
         g.attrs.update(all_data.meta)
         g.attrs["_header"] = np.frombuffer(all_data.header, dtype="uint8")
         g.attrs["_footer"] = np.frombuffer(all_data.footer, dtype="uint8")
+        g.attrs["_dat2hdf5_version"] = version
         for ds, channel_idx in ds_to_channel.items():
             g.create_dataset(ds, data=all_data.data[channel_idx], **ds_kwargs)
 
