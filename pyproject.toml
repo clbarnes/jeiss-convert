@@ -1,13 +1,35 @@
-[build-system]
-requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
+[project]
+name = "jeiss-convert"
+version = "0.1.0"
+description = "Convert Jeiss FIBSEM .dat files"
+authors = [
+    {name = "Chris Barnes", email = "cbarnes@mrc-lmb.cam.ac.uk"},
+]
+requires-python = ">=3.9"
+readme = "README.md"
+license = {text = "MIT"}
+dependencies = [
+    "numpy",
+    "h5py",
+]
 
-[tool.setuptools_scm]
-write_to = "jeiss_convert/version.py"
+[tool.pdm]
+# source = {name = "pypi", url = "https://pypi.org/simple", verify_ssl = true}
+includes = ["src/jeiss_convert/jeiss-specs/**/*.tsv"]
+
+[tool.pdm.dev-dependencies]
+doc = ["pipe2codeblock", "pdoc3"]
+lint = ["black", "flake8", "isort", "mypy"]
+test = ["pooch", "pytest"]
+
+[build-system]
+requires = ["pdm-pep517"]
+build-backend = "pdm.pep517.api"
 
 [tool.isort]
 profile = "black"
 multi_line_output = 3
-extend_skip_glob = ["jeiss_convert/jeiss-specs/*.py"]
+extend_skip_glob = ["src/jeiss_convert/jeiss-specs/*.py"]
 
 [tool.black]
-extend-exclude = "jeiss_convert/jeiss-specs/.*"
+extend-exclude = "src/jeiss_convert/jeiss-specs/.*"

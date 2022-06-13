@@ -22,8 +22,7 @@ install:
 
 .PHONY: install-dev
 install-dev:
-	pip install -r requirements.txt \
-	&& pip install -e .
+	pdm install
 
 .PHONY: clean-docs
 clean-docs:

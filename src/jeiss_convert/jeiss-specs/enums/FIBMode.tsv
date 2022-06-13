@@ -1,0 +1,10 @@
+0	SEM
+1	FIB
+2	Milling
+3	SEM + FIB
+4	Mill + SEM
+5	SEM Drift Correction
+6	FIB Drift Correction
+7	No Beam
+8	External
+9	External + SEM

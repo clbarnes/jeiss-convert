@@ -1,3 +1,3 @@
-[submodule "jeiss_convert/jeiss-specs"]
-	path = jeiss_convert/jeiss-specs
+[submodule "src/jeiss_convert/jeiss-specs"]
+	path = src/jeiss_convert/jeiss-specs
 	url = https://github.com/clbarnes/jeiss-specs.git
