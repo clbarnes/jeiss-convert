@@ -10,6 +10,7 @@ from argparse import ArgumentParser
 from pathlib import Path
 
 from .utils import hdf5_to_bytes
+from .version import version
 
 
 def md5sum(b):
@@ -93,6 +94,11 @@ def main(args=None):
             "with an existing dat, write out the calculated dat. "
             "Comes with an interactive warning. Don't do this."
         ),
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=version,
     )
     parsed = parser.parse_args(args)
     if parsed.write_dat:

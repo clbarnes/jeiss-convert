@@ -5,7 +5,7 @@ Convert Jeiss .dat files
 ## Usage
 
 ```_dat2hdf5
-usage: dat2hdf5 [-h] [-c CHUNKS] [-z COMPRESSION] [-B] [-o] [-f]
+usage: dat2hdf5 [-h] [-c CHUNKS] [-z COMPRESSION] [-B] [-o] [-f] [--version]
                 dat hdf5 [group]
 
 Convert a Jeiss FIBSEM .dat file into a standard HDF5, preserving all known
@@ -31,10 +31,12 @@ optional arguments:
   -o, --scale-offset    Apply the scale-offset filter, which may decrease size
                         of chunked data.
   -f, --fletcher32      Checksum each chunk to allow detection of corruption
+  --version             show program's version number and exit
 ```
 
 ```_dat2hdf5-verify
-usage: dat2hdf5-verify [-h] [-d] [-s] [--write-dat] dat hdf5 [group]
+usage: dat2hdf5-verify [-h] [-d] [-s] [--write-dat] [--version]
+                       dat hdf5 [group]
 
 Verify that the contents of an HDF5 container are identical to an existing
 Jeiss FIBSEM .dat file, so that the .dat can be safely deleted.
@@ -53,4 +55,5 @@ optional arguments:
   --write-dat       Instead of checking the HDF5 for its identity with an
                     existing dat, write out the calculated dat. Comes with an
                     interactive warning. Don't do this.
+  --version         show program's version number and exit
 ```

@@ -9,6 +9,7 @@ from argparse import ArgumentParser
 from pathlib import Path
 
 from .utils import dat_to_hdf5
+from .version import version
 
 
 def parse_chunks(s: str):
@@ -88,6 +89,11 @@ def main(args=None):
         "--fletcher32",
         action="store_true",
         help="Checksum each chunk to allow detection of corruption",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=version,
     )
 
     parsed = parser.parse_args(args)
