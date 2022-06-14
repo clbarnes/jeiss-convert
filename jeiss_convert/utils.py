@@ -1,8 +1,8 @@
+import hashlib
+import logging
 import typing as tp
 from io import BytesIO
 from pathlib import Path
-import logging
-import hashlib
 
 import numpy as np
 
@@ -89,9 +89,7 @@ class SpecTuple(tp.NamedTuple):
             logger.warning("Key %s already in dict; not overwriting", self.name)
             return out
 
-        out[self.name] = read_value(
-            f, self.dtype, self.offset, self.realise_shape(out)
-        )
+        out[self.name] = read_value(f, self.dtype, self.offset, self.realise_shape(out))
         return out
 
     @classmethod

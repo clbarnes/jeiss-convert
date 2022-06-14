@@ -8,8 +8,8 @@ import sys
 from argparse import ArgumentParser
 from pathlib import Path
 
-from .utils import md5sum
 from .hdf5 import hdf5_to_bytes
+from .utils import md5sum
 from .version import version
 
 

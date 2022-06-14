@@ -3,7 +3,7 @@ from pathlib import Path
 import h5py
 import numpy as np
 
-from .utils import group_to_bytes, split_channels, write_header, DEFAULT_BYTE_ORDER
+from .utils import DEFAULT_BYTE_ORDER, group_to_bytes, split_channels, write_header
 
 
 def dat_to_hdf5(
