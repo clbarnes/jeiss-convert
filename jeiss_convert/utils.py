@@ -1,10 +1,14 @@
 import typing as tp
 from io import BytesIO
 from pathlib import Path
+import logging
+import hashlib
 
-import h5py
 import numpy as np
+
 from .version import version
+
+logger = logging.getLogger(__name__)
 
 spec_dir = Path(__file__).resolve().parent / "jeiss-specs" / "specs"
 
@@ -77,17 +81,33 @@ class SpecTuple(tp.NamedTuple):
             for line in f:
                 yield cls.from_line(line)
 
-    def read_into(self, f, out=None):
+    def read_into(self, f, out=None, force=False):
         if out is None:
             out = dict()
-        if self.name not in out:
-            out[self.name] = read_value(
-                f, self.dtype, self.offset, self.realise_shape(out)
-            )
+
+        if self.name in out and not force:
+            logger.warning("Key %s already in dict; not overwriting", self.name)
+            return out
+
+        out[self.name] = read_value(
+            f, self.dtype, self.offset, self.realise_shape(out)
+        )
         return out
 
+    @classmethod
+    def dtype_to_native(cls, value):
+        """Convert numpy value to its native python equivalent"""
+        return value.tolist()
 
-SPECS = {
+    def native_to_dtype(self, value):
+        """Convert native python value to its numpy equivalent according to spec"""
+        arr = np.asarray(value, self.dtype)
+        if isinstance(value, list):
+            return arr
+        return arr.reshape(1)[0]
+
+
+SPECS: dict[int, tuple[SpecTuple, ...]] = {
     int(tsv.stem[1:]): tuple(SpecTuple.from_file(tsv)) for tsv in spec_dir.glob("*.tsv")
 }
 
@@ -145,3 +165,109 @@ class ParsedData(tp.NamedTuple):
         with open(fpath, "rb") as f:
             return cls.from_bytes(f.read())
 
+    def header_hex(self) -> tp.Optional[str]:
+        if self.header is None:
+            return None
+        return self.header.hex()
+
+    def footer_hex(self) -> tp.Optional[str]:
+        if self.footer is None:
+            return None
+        return self.footer.hex()
+
+
+def metadata_to_native(meta: dict[str, tp.Any]) -> dict[str, tp.Any]:
+    file_ver = meta["FileVersion"]
+    spec = SPECS[file_ver]
+    out = dict()
+    for item in spec:
+        out[item.name] = item.dtype_to_native(meta[item.name])
+    return out
+
+
+def metadata_to_numpy(meta: dict[str, tp.Any]) -> dict[str, tp.Any]:
+    file_ver = meta["FileVersion"]
+    spec = SPECS[file_ver]
+    out = dict()
+    for item in spec:
+        out[item.name] = item.native_to_dtype(meta[item.name])
+    return out
+
+
+def split_channels(
+    dat_path: Path, json_metadata=False
+) -> tuple[dict[str, tp.Any], list[str], np.ndarray]:
+    all_data = ParsedData.from_file(dat_path)
+    channel_names = []
+    for input_id in range(1, 5):
+        ds = f"AI{input_id}"
+
+        if all_data.meta[ds]:
+            channel_names.append(ds)
+
+    if json_metadata:
+        meta = metadata_to_native(all_data.meta)
+        if all_data.header is not None:
+            meta["_header"] = all_data.header.hex()
+        if all_data.footer is not None:
+            meta["_footer"] = all_data.footer.hex()
+    else:
+        meta = all_data.meta
+        if all_data.header is not None:
+            meta["_header"] = np.frombuffer(all_data.header, "uint8")
+        if all_data.footer is not None:
+            meta["_footer"] = np.frombuffer(all_data.footer, "uint8")
+
+    meta["_dat2hdf5_version"] = version
+    return meta, channel_names, all_data.data
+
+
+def get_bytes(d: dict[str, tp.Any], key: str):
+    val = d.get(key)
+    if val is None:
+        return b""
+
+    if isinstance(val, str):
+        return bytes.fromhex(val)
+    elif isinstance(val, np.ndarray):
+        return val.tobytes()
+    else:
+        raise ValueError(
+            "Expected str (hex-encoded) or uint8 numpy array "
+            f"to convert into bytes, got {type(val)}"
+        )
+
+
+def md5sum(b):
+    md5 = hashlib.md5()
+    md5.update(b)
+    return md5.hexdigest()
+
+
+def group_to_bytes(g, json_metadata=False, check_header=True):
+    if json_metadata:
+        meta = metadata_to_numpy(g.attrs)
+    else:
+        meta = g.attrs
+
+    header = write_header(meta)
+    if check_header:
+        stored_header = get_bytes(meta, "_header")
+        if stored_header and md5sum(stored_header) != md5sum(header):
+            raise RuntimeError(
+                f"Stored header (length {len(stored_header)}) is different to "
+                f"calculated header (length {len(header)})"
+            )
+    footer = get_bytes(meta, "_footer")
+
+    to_stack = []
+    for input_id in range(1, 5):
+        ds_name = f"AI{input_id}"
+        if ds_name not in g:
+            continue
+        to_stack.append(g[ds_name][:])
+
+    stacked = np.stack(to_stack, axis=0)
+    dtype = stacked.dtype.newbyteorder(DEFAULT_BYTE_ORDER)
+    b = np.asarray(stacked, dtype, order="F").tobytes(order="F")
+    return header + b + footer

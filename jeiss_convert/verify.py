@@ -4,19 +4,13 @@ Verify that the contents of an HDF5 container are identical
 to an existing Jeiss FIBSEM .dat file,
 so that the .dat can be safely deleted.
 """
-import hashlib
 import sys
 from argparse import ArgumentParser
 from pathlib import Path
 
+from .utils import md5sum
 from .hdf5 import hdf5_to_bytes
 from .version import version
-
-
-def md5sum(b):
-    md5 = hashlib.md5()
-    md5.update(b)
-    return md5.hexdigest()
 
 
 def noop(arg):
