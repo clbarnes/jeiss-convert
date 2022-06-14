@@ -8,7 +8,7 @@ import sys
 from argparse import ArgumentParser
 from pathlib import Path
 
-from .utils import dat_to_hdf5
+from .hdf5 import dat_to_hdf5
 from .version import version
 
 

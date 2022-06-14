@@ -9,7 +9,7 @@ import sys
 from argparse import ArgumentParser
 from pathlib import Path
 
-from .utils import hdf5_to_bytes
+from .hdf5 import hdf5_to_bytes
 from .version import version
 
 
@@ -24,7 +24,7 @@ def noop(arg):
 
 
 def warn(*args, **kwargs):
-    kwargs.setdefault(file=sys.stderr)
+    kwargs.setdefault("file", sys.stderr)
     print(*args, **kwargs)
 
 
