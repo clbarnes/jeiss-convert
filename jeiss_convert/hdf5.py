@@ -1,9 +1,8 @@
 from pathlib import Path
 
 import h5py
-import numpy as np
 
-from .utils import DEFAULT_BYTE_ORDER, group_to_bytes, split_channels, write_header
+from .utils import group_to_bytes, split_channels
 
 
 def dat_to_hdf5(
