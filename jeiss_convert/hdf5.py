@@ -1,3 +1,4 @@
+import typing as tp
 from pathlib import Path
 
 import h5py
@@ -7,23 +8,23 @@ from .utils import group_to_bytes, split_channels
 
 def dat_to_hdf5(
     dat_path: Path,
-    hdf5_path: Path,
-    hdf5_group=None,
-    ds_kwargs=None,
+    container_path: Path,
+    group_name: tp.Optional[str] = None,
+    ds_kwargs: tp.Optional[dict[str, tp.Any]] = None,
 ):
     meta, channel_names, data = split_channels(dat_path)
 
     if ds_kwargs is None:
         ds_kwargs = dict()
 
-    if not hdf5_group:
-        hdf5_group = "/"
+    if not group_name:
+        group_name = "/"
 
-    with h5py.File(hdf5_path, "a") as h5:
-        if hdf5_group == "/":
+    with h5py.File(container_path, "a") as h5:
+        if group_name == "/":
             g = h5
         else:
-            g = h5.create_group(hdf5_group)
+            g = h5.create_group(group_name)
 
         g.attrs.update(meta)
 
@@ -32,24 +33,10 @@ def dat_to_hdf5(
 
 
 def hdf5_to_bytes(hdf5_path, hdf5_group=None):
-    if hdf5_group is None:
+    if not hdf5_group:
         hdf5_group = "/"
 
     with h5py.File(hdf5_path) as h5:
         g = h5[hdf5_group]
         b = group_to_bytes(g)
     return b
-    #     header = write_header(g.attrs)
-    #     to_stack = []
-    #     for input_id in range(1, 5):
-    #         ds_name = f"AI{input_id}"
-    #         if ds_name not in g:
-    #             continue
-    #         to_stack.append(g[ds_name][:])
-    #     footer = g.attrs.get("_footer", np.array([], "uint8"))
-
-    # stacked = np.stack(to_stack, axis=0)
-    # dtype = stacked.dtype.newbyteorder(DEFAULT_BYTE_ORDER)
-    # b = np.asarray(stacked, dtype, order="F").tobytes(order="F")
-    # footer_bytes = footer.tobytes()
-    # return header + b + footer_bytes

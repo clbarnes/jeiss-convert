@@ -93,12 +93,17 @@ class SpecTuple(tp.NamedTuple):
         return out
 
     @classmethod
-    def dtype_to_native(cls, value):
-        """Convert numpy value to its native python equivalent"""
-        return value.tolist()
+    def dtype_to_jso(cls, value):
+        """Convert numpy value to something JSON-serialisable"""
+        val = value.tolist()
+        if isinstance(val, bytes):
+            val = val.decode()
+        return val
 
-    def native_to_dtype(self, value):
-        """Convert native python value to its numpy equivalent according to spec"""
+    def jso_to_dtype(self, value):
+        """Convert something JSON-serialisable to its numpy equivalent according to spec"""
+        if isinstance(value, str):
+            value = value.encode()
         arr = np.asarray(value, self.dtype)
         if isinstance(value, list):
             return arr
@@ -174,12 +179,12 @@ class ParsedData(tp.NamedTuple):
         return self.footer.hex()
 
 
-def metadata_to_native(meta: dict[str, tp.Any]) -> dict[str, tp.Any]:
+def metadata_to_jso(meta: dict[str, tp.Any]) -> dict[str, tp.Any]:
     file_ver = meta["FileVersion"]
     spec = SPECS[file_ver]
     out = dict()
     for item in spec:
-        out[item.name] = item.dtype_to_native(meta[item.name])
+        out[item.name] = item.dtype_to_jso(meta[item.name])
     return out
 
 
@@ -188,7 +193,7 @@ def metadata_to_numpy(meta: dict[str, tp.Any]) -> dict[str, tp.Any]:
     spec = SPECS[file_ver]
     out = dict()
     for item in spec:
-        out[item.name] = item.native_to_dtype(meta[item.name])
+        out[item.name] = item.jso_to_dtype(meta[item.name])
     return out
 
 
@@ -204,7 +209,7 @@ def split_channels(
             channel_names.append(ds)
 
     if json_metadata:
-        meta = metadata_to_native(all_data.meta)
+        meta = metadata_to_jso(all_data.meta)
         if all_data.header is not None:
             meta["_header"] = all_data.header.hex()
         if all_data.footer is not None:

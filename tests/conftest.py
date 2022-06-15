@@ -29,4 +29,4 @@ def dat_path(request, sample_dats):
         pytest.skip(f"No sample file for version {version}")
 
     md5sum, url = sample_dats[version]
-    return pooch.retrieve(url=url, known_hash="md5:" + md5sum)
+    return Path(pooch.retrieve(url=url, known_hash="md5:" + md5sum))
