@@ -86,7 +86,6 @@ class SpecTuple(tp.NamedTuple):
             out = dict()
 
         if self.name in out and not force:
-            logger.warning("Key %s already in dict; not overwriting", self.name)
             return out
 
         out[self.name] = read_value(f, self.dtype, self.offset, self.realise_shape(out))
