@@ -94,14 +94,14 @@ class SpecTuple(tp.NamedTuple):
 
     @classmethod
     def dtype_to_jso(cls, value):
-        """Convert numpy value to something JSON-serialisable"""
+        """Convert numpy value to something JSONable"""
         val = value.tolist()
         if isinstance(val, bytes):
             val = val.decode()
         return val
 
     def jso_to_dtype(self, value):
-        """Convert something JSON-serialisable to its numpy equivalent according to spec"""
+        """Convert something JSONable to its numpy equivalent according to spec"""
         if isinstance(value, str):
             value = value.encode()
         arr = np.asarray(value, self.dtype)
