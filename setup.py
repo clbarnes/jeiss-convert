@@ -17,6 +17,7 @@ setup(
         "numpy",
         "h5py",
         "tomli; python_version < '3.11'",
+        "zarr",
     ],
     python_requires=">=3.9, <4.0",
     classifiers=[
