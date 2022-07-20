@@ -4,33 +4,27 @@ import sys
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
 
-from .utils import HEADER_LENGTH, metadata_to_jso, parse_bytes
+from .utils import metadata_to_jso, parse_file
 
 min_ver = ".".join(str(i) for i in sys.version_info[:2])
 
 
-def read_meta(path: Path):
-    with open(path, "rb") as f:
-        b = f.read(HEADER_LENGTH)
-    return parse_bytes(b)
-
-
 def meta_ls(args: Namespace):
-    m = read_meta(args.dat)
+    m = parse_file(args.dat)
     for key in m:
         print(key)
     return 0
 
 
 def meta_fmt(args: Namespace):
-    m = read_meta(args.dat)
+    m = parse_file(args.dat)
     for fmt in args.format:
         print(fmt.format(**m))
     return 0
 
 
 def meta_json(args: Namespace):
-    m = read_meta(args.dat)
+    m = parse_file(args.dat)
     m = metadata_to_jso(m)
     if args.field:
         m = {f: m[f] for f in args.field}
@@ -52,7 +46,7 @@ def meta_json(args: Namespace):
 
 
 def meta_get(args: Namespace):
-    m = read_meta(args.dat)
+    m = parse_file(args.dat)
     m = metadata_to_jso(m)
     if args.field:
         m = {f: m[f] for f in args.field}
