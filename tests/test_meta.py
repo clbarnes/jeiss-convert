@@ -1,9 +1,7 @@
 import json
 
 from jeiss_convert.meta import main as datmeta
-
-# todo: add this to jeiss-specs and import from there
-MAGIC_NUMBER = 3_555_587_570
+from jeiss_convert.misc import MAGIC_NUMBER
 
 
 def get_output(capsys, *args: str):
