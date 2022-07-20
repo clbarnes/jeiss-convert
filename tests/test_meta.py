@@ -35,7 +35,7 @@ def test_fmt(dat_path, capsys):
 
 
 def test_list(dat_path, capsys):
-    val, out, _ = get_output(capsys, "list", dat_path)
+    val, out, _ = get_output(capsys, "ls", dat_path)
     assert val == 0
     assert out.rstrip().splitlines()
 
