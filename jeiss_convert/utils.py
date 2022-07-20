@@ -6,15 +6,10 @@ from pathlib import Path
 
 import numpy as np
 
+from .misc import DEFAULT_AXIS_ORDER, DEFAULT_BYTE_ORDER, HEADER_LENGTH, SPEC_DIR
 from .version import version
 
 logger = logging.getLogger(__name__)
-
-spec_dir = Path(__file__).resolve().parent / "jeiss-specs" / "specs"
-
-DEFAULT_AXIS_ORDER = "F"
-DEFAULT_BYTE_ORDER = ">"
-HEADER_LENGTH = 1024
 
 
 def read_value(
@@ -86,7 +81,6 @@ class SpecTuple(tp.NamedTuple):
             out = dict()
 
         if self.name in out and not force:
-            logger.warning("Key %s already in dict; not overwriting", self.name)
             return out
 
         out[self.name] = read_value(f, self.dtype, self.offset, self.realise_shape(out))
@@ -111,7 +105,7 @@ class SpecTuple(tp.NamedTuple):
 
 
 SPECS: dict[int, tuple[SpecTuple, ...]] = {
-    int(tsv.stem[1:]): tuple(SpecTuple.from_file(tsv)) for tsv in spec_dir.glob("*.tsv")
+    int(tsv.stem[1:]): tuple(SpecTuple.from_file(tsv)) for tsv in SPEC_DIR.glob("*.tsv")
 }
 
 

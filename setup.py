@@ -13,7 +13,11 @@ setup(
     long_description=readme,
     long_description_content_type="text/markdown",
     packages=find_packages(include=["jeiss_convert"]),
-    install_requires=["numpy", "h5py"],
+    install_requires=[
+        "numpy",
+        "h5py",
+        "tomli; python_version < '3.11'",
+    ],
     python_requires=">=3.9, <4.0",
     classifiers=[
         "Development Status :: 3 - Alpha",
@@ -30,5 +34,5 @@ setup(
             "dat2hdf5-verify=jeiss_convert.verify:_main",
         ]
     },
-    package_data={"": ["**/*.tsv"]},
+    package_data={"": ["**/*.tsv", "**/*.toml"]},
 )
