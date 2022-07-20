@@ -1,3 +1,4 @@
+"""Interrogate and dump Jeiss FIBSEM .dat metadata."""
 import sys
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
@@ -42,7 +43,7 @@ def meta_json(args: Namespace):
             kwargs["indent"] = args.indent
         else:
             if indent < 0:
-                kwargs["separators"] = (',', ':')
+                kwargs["separators"] = (",", ":")
             else:
                 kwargs["indent"] = indent
     kwargs["sort_keys"] = bool(args.sort)
@@ -67,28 +68,37 @@ def meta_get(args: Namespace):
 
 def main(args=None):
     parser = ArgumentParser("datmeta", description=__doc__)
-    parent_parser = ArgumentParser()
+    parent_parser = ArgumentParser(add_help=False)
     parent_parser.add_argument("dat", type=Path, help="Path to .dat file")
 
     subparsers = parser.add_subparsers(title="subcommands")
 
-    ls_parser = subparsers.add_parser("ls", parents=[parent_parser], add_help=False)
+    ls_parser = subparsers.add_parser(
+        "ls", parents=[parent_parser], description="List metadata field names."
+    )
     ls_parser.set_defaults(func=meta_ls)
 
-    fmt_parser = subparsers.add_parser("fmt", parents=[parent_parser], add_help=False)
+    fmt_parser = subparsers.add_parser(
+        "fmt",
+        parents=[parent_parser],
+        description=(
+            "Use python format string notation to interpolate metadata values into string. "
+            "If multiple format strings are given, print each separated by newlines."
+        ),
+    )
     fmt_parser.add_argument(
         "format",
         nargs="*",
         help=(
-            "Use python format string notation to interpolate metadata values "
-            "into string, e.g. 'My version is {FileVersion}'. "
-            f"See more at https://docs.python.org/{min_ver}/library/string.html#formatstrings. "
-            "If multiple format strings are given, print each separated by newlines."
-        )
+            "Format string, e.g. 'Version is {FileVersion}'. "
+            f"More details at https://docs.python.org/{min_ver}/library/string.html#formatstrings. "
+        ),
     )
     fmt_parser.set_defaults(func=meta_fmt)
 
-    json_parser = subparsers.add_parser("json", parents=[parent_parser], add_help=False)
+    json_parser = subparsers.add_parser(
+        "json", parents=[parent_parser], description="Dump metadata as JSON."
+    )
     json_parser.set_defaults(func=meta_json)
     json_parser.add_argument("-s", "--sort", action="store_true", help="Sort JSON keys")
     json_parser.add_argument(
@@ -102,9 +112,20 @@ def main(args=None):
     )
     json_parser.add_argument("field", nargs="*", help="Only dump the listed fields.")
 
-    get_parser = subparsers.add_parser("get", parents=[parent_parser], add_help=False)
+    get_parser = subparsers.add_parser(
+        "get",
+        parents=[parent_parser],
+        description=(
+            "Read metadata values. "
+            "By default, a TSV with keys in the first column and values in the second "
+            "(arrays JSON-serialised); "
+            "key column can be omitted."
+        ),
+    )
     get_parser.set_defaults(func=meta_get)
-    get_parser.add_argument("-d", "--data-only", action="store_true", help="Do not print field names")
+    get_parser.add_argument(
+        "-d", "--data-only", action="store_true", help="Do not print field names"
+    )
     get_parser.add_argument("field", nargs="*", help="Only show the given fields")
 
     parsed = parser.parse_args(args)
