@@ -7,14 +7,9 @@ from pathlib import Path
 import numpy as np
 
 from .version import version
+from .misc import SPEC_DIR, DEFAULT_AXIS_ORDER, DEFAULT_BYTE_ORDER, HEADER_LENGTH
 
 logger = logging.getLogger(__name__)
-
-spec_dir = Path(__file__).resolve().parent / "jeiss-specs" / "specs"
-
-DEFAULT_AXIS_ORDER = "F"
-DEFAULT_BYTE_ORDER = ">"
-HEADER_LENGTH = 1024
 
 
 def read_value(
@@ -110,7 +105,7 @@ class SpecTuple(tp.NamedTuple):
 
 
 SPECS: dict[int, tuple[SpecTuple, ...]] = {
-    int(tsv.stem[1:]): tuple(SpecTuple.from_file(tsv)) for tsv in spec_dir.glob("*.tsv")
+    int(tsv.stem[1:]): tuple(SpecTuple.from_file(tsv)) for tsv in SPEC_DIR.glob("*.tsv")
 }
 
 
