@@ -99,7 +99,7 @@ class SpecTuple(tp.NamedTuple):
         if isinstance(value, str):
             value = value.encode()
         arr = np.asarray(value, self.dtype)
-        if isinstance(value, list):
+        if isinstance(value, list) :
             return arr
         return arr.reshape(1)[0]
 
