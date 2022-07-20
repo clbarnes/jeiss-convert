@@ -1,11 +1,10 @@
 """Interrogate and dump Jeiss FIBSEM .dat metadata."""
+import json
 import sys
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
-import json
 
-from .utils import parse_bytes, metadata_to_jso, HEADER_LENGTH
-
+from .utils import HEADER_LENGTH, metadata_to_jso, parse_bytes
 
 min_ver = ".".join(str(i) for i in sys.version_info[:2])
 
@@ -58,9 +57,15 @@ def meta_get(args: Namespace):
     if args.field:
         m = {f: m[f] for f in args.field}
     if args.data_only:
-        fmt = lambda _, v: f"{v if isinstance(v, str) else json.dumps(v)}"
+
+        def fmt(k, v):
+            return f"{v if isinstance(v, str) else json.dumps(v)}"
+
     else:
-        fmt = lambda k, v: f"{k}\t{v if isinstance(v, str) else json.dumps(v)}"
+
+        def fmt(k, v):
+            return f"{k}\t{v if isinstance(v, str) else json.dumps(v)}"
+
     for k, v in m.items():
         print(fmt(k, v))
     return 0
@@ -82,8 +87,10 @@ def main(args=None):
         "fmt",
         parents=[parent_parser],
         description=(
-            "Use python format string notation to interpolate metadata values into string. "
-            "If multiple format strings are given, print each separated by newlines."
+            "Use python format string notation to interpolate "
+            "metadata values into string. "
+            "If multiple format strings are given, "
+            "print each separated by newlines."
         ),
     )
     fmt_parser.add_argument(
@@ -91,7 +98,8 @@ def main(args=None):
         nargs="*",
         help=(
             "Format string, e.g. 'Version is {FileVersion}'. "
-            f"More details at https://docs.python.org/{min_ver}/library/string.html#formatstrings. "
+            "More details at "
+            f"https://docs.python.org/{min_ver}/library/string.html#formatstrings."
         ),
     )
     fmt_parser.set_defaults(func=meta_fmt)
