@@ -6,8 +6,8 @@ from pathlib import Path
 
 import numpy as np
 
+from .misc import DEFAULT_AXIS_ORDER, DEFAULT_BYTE_ORDER, HEADER_LENGTH, SPEC_DIR
 from .version import version
-from .misc import SPEC_DIR, DEFAULT_AXIS_ORDER, DEFAULT_BYTE_ORDER, HEADER_LENGTH
 
 logger = logging.getLogger(__name__)
 
