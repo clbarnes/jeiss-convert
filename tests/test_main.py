@@ -1,6 +1,5 @@
 from contextlib import contextmanager
 from pathlib import Path
-import hashlib
 
 import h5py
 import numpy as np
@@ -8,13 +7,13 @@ import zarr
 
 from jeiss_convert.misc import FOOTER_KEY, HEADER_LENGTH
 from jeiss_convert.utils import (
+    hashsum,
     into_bytes,
     metadata_to_jso,
     metadata_to_numpy,
     parse_file,
     split_channels,
     write_header,
-    hashsum,
 )
 
 from .conftest import Mode, RoundtripResult

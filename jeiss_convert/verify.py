@@ -4,14 +4,14 @@ Verify that the contents of an HDF5 container are identical
 to an existing Jeiss FIBSEM .dat file,
 so that the .dat can be safely deleted.
 """
-from contextlib import contextmanager
 import sys
 from argparse import ArgumentParser
+from contextlib import contextmanager
 from pathlib import Path
 
 from .hdf5 import hdf5_to_bytes
-from .version import version
 from .utils import hashsum
+from .version import version
 
 
 def warn(*args, **kwargs):
