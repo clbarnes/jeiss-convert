@@ -44,7 +44,7 @@ class Mode(NamedTuple):
     json_metadata: bool
 
 
-@pytest.fixture(params=["hdf5", "n5", "zarr"])
+@pytest.fixture(params=["hdf5", "n5", "zarr"], scope="session")
 def mode(request):
     if request.param == "hdf5":
         return Mode("hdf5", dat_to_hdf5, hdf5_to_bytes, False)
@@ -63,9 +63,13 @@ class RoundtripResult(NamedTuple):
     json_metadata: bool
 
 
-@pytest.fixture
-def roundtripped(dat_path, mode, tmp_path):
-    container_path = tmp_path / f"data.{mode.name}"
+@pytest.fixture(scope="session")
+def roundtripped(dat_path, mode, tmp_path_factory):
+    container_path = tmp_path_factory.mktemp("containers") / f"data.{mode.name}"
     mode.dat_to_container(dat_path, container_path)
     written_bytes = mode.container_to_dat_bytes(container_path)
-    return RoundtripResult(dat_path, container_path, written_bytes, mode.json_metadata)
+    yield RoundtripResult(dat_path, container_path, written_bytes, mode.json_metadata)
+    try:
+        shutil.rmtree(container_path)
+    except OSError:
+        pass
