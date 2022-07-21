@@ -242,12 +242,6 @@ def into_bytes(val) -> bytes:
         )
 
 
-def md5sum(b):
-    md5 = hashlib.md5()
-    md5.update(b)
-    return md5.hexdigest()
-
-
 def group_to_bytes(g, json_metadata=False, check_header=True):
     if json_metadata:
         meta = metadata_to_numpy(g.attrs)
@@ -257,7 +251,7 @@ def group_to_bytes(g, json_metadata=False, check_header=True):
     header = write_header(meta)
     if check_header:
         stored_header = into_bytes(g.attrs.get(HEADER_KEY))
-        if stored_header and md5sum(stored_header) != md5sum(header):
+        if stored_header and stored_header != header:
             raise RuntimeError(
                 f"Stored header (length {len(stored_header)}) is different to "
                 f"calculated header (length {len(header)})"
@@ -275,3 +269,17 @@ def group_to_bytes(g, json_metadata=False, check_header=True):
     dtype = stacked.dtype.newbyteorder(DEFAULT_BYTE_ORDER)
     b = np.asarray(stacked, dtype, order="F").tobytes(order="F")
     return header + b + footer
+
+
+def hashsum(
+    stream: tp.Union[bytes, tp.BinaryIO],
+    hash_cls=hashlib.blake2b,
+    chunk_size: int = 4096,
+):
+    hasher = hash_cls()
+    if isinstance(stream, bytes):
+        hasher.update(stream)
+    else:
+        while chunk := stream.read(chunk_size):
+            hasher.update(chunk)
+    return hasher.hexdigest()

@@ -1,5 +1,6 @@
 from contextlib import contextmanager
 from pathlib import Path
+import hashlib
 
 import h5py
 import numpy as np
@@ -8,12 +9,12 @@ import zarr
 from jeiss_convert.misc import FOOTER_KEY, HEADER_LENGTH
 from jeiss_convert.utils import (
     into_bytes,
-    md5sum,
     metadata_to_jso,
     metadata_to_numpy,
     parse_file,
     split_channels,
     write_header,
+    hashsum,
 )
 
 from .conftest import Mode, RoundtripResult
@@ -86,7 +87,7 @@ def assert_bytes_equal(test: bytes, ref: bytes, ends=64, test_full=False):
     assert len(test) == len(ref)
     assert test[:ends] == ref[:ends]
     assert test[ends:] == ref[ends:]
-    assert md5sum(test) == md5sum(ref)
+    assert hashsum(test) == hashsum(ref)
     if test_full:
         assert test == ref
 
