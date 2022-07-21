@@ -6,15 +6,12 @@ so that the .dat can be safely deleted.
 """
 import sys
 from argparse import ArgumentParser
+from contextlib import contextmanager
 from pathlib import Path
 
 from .hdf5 import hdf5_to_bytes
-from .utils import md5sum
+from .utils import hashsum
 from .version import version
-
-
-def noop(arg):
-    return arg
 
 
 def warn(*args, **kwargs):
@@ -22,7 +19,7 @@ def warn(*args, **kwargs):
     print(*args, **kwargs)
 
 
-def write_dat(fpath: Path, hdf5_path, group=None):
+def write_dat(fpath: Path, dat_bytes: bytes):
     if fpath.exists():
         warn("Exiting due to existing file at " + str(fpath))
         return 2
@@ -40,23 +37,24 @@ def write_dat(fpath: Path, hdf5_path, group=None):
         if response.lower() in ["", "n", "no"]:
             warn("Not writing or validating anything")
             return 0
-        warn(
-            "Interpreting response non-'yes' response "
-            f"'{response}' as negative, exiting"
-        )
+        warn("Interpreting non-'yes' response " f"'{response}' as negative, exiting")
         return 2
 
-    b = hdf5_to_bytes(hdf5_path, group)
     if str(fpath) == "-":
-        sys.stdout.buffer.write(b)
+        sys.stdout.buffer.write(dat_bytes)
     else:
-        fpath.write_bytes(b)
+        fpath.write_bytes(dat_bytes)
+
+    return 0
 
 
-def read_bytes(fpath: Path):
+@contextmanager
+def open_bytes(fpath: Path):
     if str(fpath) == "-":
-        return sys.stdin.buffer.read()
-    return fpath.read_bytes()
+        yield sys.stdin.buffer
+    else:
+        with open(fpath, "rb") as f:
+            yield f
 
 
 def main(args=None):
@@ -75,12 +73,6 @@ def main(args=None):
         help="Delete the .dat file if the check succeeds",
     )
     parser.add_argument(
-        "-s",
-        "--strict",
-        action="store_true",
-        help="Check for identity of bytes rather than hash (slow and unnecessary)",
-    )
-    parser.add_argument(
         "--write-dat",
         action="store_true",
         help=(
@@ -95,15 +87,17 @@ def main(args=None):
         version=version,
     )
     parsed = parser.parse_args(args)
+    reconverted_bytes = hdf5_to_bytes(parsed.hdf5, parsed.group)
+
     if parsed.write_dat:
-        return write_dat(parsed.dat, parsed.hdf5, parsed.group)
+        return write_dat(parsed.dat, reconverted_bytes)
 
-    fn = noop if parsed.strict else md5sum
+    with open_bytes(parsed.dat) as f:
+        dat_sum = hashsum(f)
 
-    dat = fn(read_bytes(parsed.dat))
-    hdf5 = fn(hdf5_to_bytes(parsed.hdf5, parsed.group))
+    reconverted_sum = hashsum(reconverted_bytes)
 
-    if dat != hdf5:
+    if dat_sum != reconverted_sum:
         return 1
 
     if parsed.delete_dat:

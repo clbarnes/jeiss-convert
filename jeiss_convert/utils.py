@@ -6,7 +6,14 @@ from pathlib import Path
 
 import numpy as np
 
-from .misc import DEFAULT_AXIS_ORDER, DEFAULT_BYTE_ORDER, HEADER_LENGTH, SPEC_DIR
+from .misc import (
+    DEFAULT_AXIS_ORDER,
+    DEFAULT_BYTE_ORDER,
+    FOOTER_KEY,
+    HEADER_KEY,
+    HEADER_LENGTH,
+    SPEC_DIR,
+)
 from .version import version
 
 logger = logging.getLogger(__name__)
@@ -205,40 +212,34 @@ def split_channels(
     if json_metadata:
         meta = metadata_to_jso(all_data.meta)
         if all_data.header is not None:
-            meta["_header"] = all_data.header.hex()
+            meta[HEADER_KEY] = all_data.header.hex()
         if all_data.footer is not None:
-            meta["_footer"] = all_data.footer.hex()
+            meta[FOOTER_KEY] = all_data.footer.hex()
     else:
         meta = all_data.meta
         if all_data.header is not None:
-            meta["_header"] = np.frombuffer(all_data.header, "uint8")
+            meta[HEADER_KEY] = np.frombuffer(all_data.header, "uint8")
         if all_data.footer is not None:
-            meta["_footer"] = np.frombuffer(all_data.footer, "uint8")
+            meta[FOOTER_KEY] = np.frombuffer(all_data.footer, "uint8")
 
     meta["_dat2hdf5_version"] = version
     return meta, channel_names, all_data.data
 
 
-def get_bytes(d: dict[str, tp.Any], key: str):
-    val = d.get(key)
-    if val is None:
+def into_bytes(val) -> bytes:
+    if isinstance(val, bytes):
+        return val
+    elif val is None:
         return b""
-
-    if isinstance(val, str):
+    elif isinstance(val, str):
         return bytes.fromhex(val)
     elif isinstance(val, np.ndarray):
-        return val.tobytes()
+        return val.tobytes()  # todo: this is C by default, might want A
     else:
         raise ValueError(
             "Expected str (hex-encoded) or uint8 numpy array "
             f"to convert into bytes, got {type(val)}"
         )
-
-
-def md5sum(b):
-    md5 = hashlib.md5()
-    md5.update(b)
-    return md5.hexdigest()
 
 
 def group_to_bytes(g, json_metadata=False, check_header=True):
@@ -249,13 +250,13 @@ def group_to_bytes(g, json_metadata=False, check_header=True):
 
     header = write_header(meta)
     if check_header:
-        stored_header = get_bytes(meta, "_header")
-        if stored_header and md5sum(stored_header) != md5sum(header):
+        stored_header = into_bytes(g.attrs.get(HEADER_KEY))
+        if stored_header and stored_header != header:
             raise RuntimeError(
                 f"Stored header (length {len(stored_header)}) is different to "
                 f"calculated header (length {len(header)})"
             )
-    footer = get_bytes(meta, "_footer")
+    footer = into_bytes(g.attrs.get(FOOTER_KEY))
 
     to_stack = []
     for input_id in range(1, 5):
@@ -268,3 +269,17 @@ def group_to_bytes(g, json_metadata=False, check_header=True):
     dtype = stacked.dtype.newbyteorder(DEFAULT_BYTE_ORDER)
     b = np.asarray(stacked, dtype, order="F").tobytes(order="F")
     return header + b + footer
+
+
+def hashsum(
+    stream: tp.Union[bytes, tp.BinaryIO],
+    hash_cls=hashlib.blake2b,
+    chunk_size: int = 4096,
+):
+    hasher = hash_cls()
+    if isinstance(stream, bytes):
+        hasher.update(stream)
+    else:
+        while chunk := stream.read(chunk_size):
+            hasher.update(chunk)
+    return hasher.hexdigest()

@@ -17,3 +17,6 @@ DEFAULT_BYTE_ORDER = _misc["byte_endianness"]
 HEADER_LENGTH = _misc["data_offset"]
 MAGIC_NUMBER = _misc["magic_number"]
 DATE_FORMAT = _misc["date_format"]
+
+HEADER_KEY = "_header"
+FOOTER_KEY = "_footer"

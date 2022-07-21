@@ -1,6 +1,7 @@
 numpy
 h5py
 tomli;python_version<"3.11"
+zarr
 
 # dev
 
