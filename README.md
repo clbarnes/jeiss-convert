@@ -172,7 +172,28 @@ Avoid reading data directly from .dat files where possible.
 Use the scripts provided by this package to convert the data into HDF5 and base the rest of your tooling around that.
 
 If your conversion is more easily handled from python, as part of a more complex pipeline, you can use the provided `jeiss_convert.dat_to_hdf5` function.
-For example, to discover .dat files in a directory and write them elsewhere, in parallel:
+
+For example, to write all .dat files in a directory into a single HDF5 file (one group per file, with the group name based on the filename):
+
+```python
+from pathlib import Path
+
+from jeiss_convert import dat_to_hdf5
+
+DAT_ROOT = Path("path/to/dat/dir").resolve()
+HDF5_PATH = Path("path/to/container.hdf5").resolve()
+
+DS_KWARGS = {
+    "chunks": True,  # automatically chunk datasets
+    "compression": "gzip",  # compress data at default level
+}
+
+for dat_path in sorted(DAT_ROOT.glob("*.dat")):
+    group_name = dat_path.stem
+    dat_to_hdf5(dat_path, HDF5_PATH, group_name, ds_kwargs=**DS_KWARGS)
+```
+
+Or, to recursively discover .dat files in a directory and write each into the root of a separate HDF5 file, in parallel:
 
 ```python
 from pathlib import Path
