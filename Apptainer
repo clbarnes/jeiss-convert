@@ -1,5 +1,5 @@
 Bootstrap: docker
-From: python:3.10.8-bullseye
+From: python:3.11.1-bullseye
 
 %setup
     mkdir -p \
