@@ -1,6 +1,9 @@
 # jeiss-convert
 
-Convert Jeiss .dat files
+Convert Jeiss .dat files into a well-documented, widely compatible format: HDF5.
+
+The goal of the project is to be the single piece of software which ever has to read Jeiss .dat files.
+Image your sample, run this script, and never think about the original .dat again.
 
 ## Usage
 
@@ -140,4 +143,52 @@ positional arguments:
 optional arguments:
   -h, --help       show this help message and exit
   -d, --data-only  Do not print field names
+```
+
+### Use as a library
+
+Avoid reading data directly from .dat files where possible.
+Use the scripts provided by this package to convert the data into HDF5 and base the rest of your tooling around that.
+
+If your conversion is more easily handled from python, as part of a more complex pipeline, you can use the provided `jeiss_convert.dat_to_hdf5` function.
+For example, to discover .dat files in a directory and write them elsewhere, in parallel:
+
+```python
+from pathlib import Path
+from concurrent.futures import ProcessPoolExecutor
+
+from jeiss_convert import dat_to_hdf5
+
+N_PROCESSES = 10
+
+DAT_ROOT = Path("path/to/dat/dir").resolve()
+HDF5_ROOT = Path("path/to/hdf5/dir").resolve()
+
+DS_KWARGS = {
+    "chunks": True,  # automatically chunk dataset
+    "compression": "gzip",  # compress data at default level
+}
+
+
+def worker_fn(dat_path: Path):
+    # HDF5 file to be written to the same relative location
+    # in the target directory as it was in the source directory
+    sub_path = dat_path.relative_to(DAT_ROOT)
+    hdf5_path = (HDF5_ROOT / sub_path).with_suffix(".hdf5")
+
+    # ensure that all ancestor directories exist
+    hdf5_path.parent.mkdir(parents=True, exist_ok=True)
+
+    return dat_to_hdf5(
+        dat_path,
+        hdf5_path,
+        ds_kwargs=DS_KWARGS,
+    )
+
+
+with ProcessPoolExecutor(N_PROCESSES) as p:
+    p.map(
+        worker_fn,
+        DAT_ROOT.glob("**/*.dat"),  # recursively look for .dat files
+    )
 ```
