@@ -46,7 +46,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: eWaterCycle/setup-apptainer@v2
-      - run: make apptainer
+      - run: make container
 
   deploy-package:
     runs-on: ubuntu-20.04
