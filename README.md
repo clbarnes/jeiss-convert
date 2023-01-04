@@ -4,6 +4,8 @@ Convert Jeiss .dat files
 
 ## Usage
 
+### `dat2hdf5`
+
 ```_dat2hdf5
 usage: dat2hdf5 [-h] [-c CHUNKS] [-z COMPRESSION] [-B] [-o] [-f] [--version]
                 dat hdf5 [group]
@@ -34,6 +36,8 @@ optional arguments:
   --version             show program's version number and exit
 ```
 
+### `dat2hdf5-verify`
+
 ```_dat2hdf5-verify
 usage: dat2hdf5-verify [-h] [-d] [-s] [--write-dat] [--version]
                        dat hdf5 [group]
@@ -56,4 +60,84 @@ optional arguments:
                     existing dat, write out the calculated dat. Comes with an
                     interactive warning. Don't do this.
   --version         show program's version number and exit
+```
+
+### `datmeta`
+
+```_datmeta
+usage: datmeta [-h] {ls,fmt,json,get} ...
+
+Interrogate and dump Jeiss FIBSEM .dat metadata.
+
+optional arguments:
+  -h, --help         show this help message and exit
+
+subcommands:
+  {ls,fmt,json,get}
+```
+
+#### `datmeta ls`
+
+```_datmeta-ls
+usage: datmeta ls [-h] dat
+
+List metadata field names.
+
+positional arguments:
+  dat         Path to .dat file
+
+optional arguments:
+  -h, --help  show this help message and exit
+```
+
+#### `datmeta fmt`
+
+```_datmeta-fmt
+usage: datmeta fmt [-h] dat [format ...]
+
+Use python format string notation to interpolate metadata values into string.
+If multiple format strings are given, print each separated by newlines.
+
+positional arguments:
+  dat         Path to .dat file
+  format      Format string, e.g. 'Version is {FileVersion}'. More details at
+              https://docs.python.org/3.9/library/string.html#formatstrings.
+
+optional arguments:
+  -h, --help  show this help message and exit
+```
+
+#### `datmeta json`
+
+```_datmeta-json
+usage: datmeta json [-h] [-s] [-i INDENT] dat [field ...]
+
+Dump metadata as JSON.
+
+positional arguments:
+  dat                   Path to .dat file
+  field                 Only dump the listed fields.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -s, --sort            Sort JSON keys
+  -i INDENT, --indent INDENT
+                        Number of spaces to indent. If negative, also strip
+                        spaces between separators.
+```
+
+#### `datmeta get`
+
+```_datmeta-get
+usage: datmeta get [-h] [-d] dat [field ...]
+
+Read metadata values.
+
+positional arguments:
+  dat              Path to .dat file
+  field            Only show the given fields
+
+optional arguments:
+  -h, --help       show this help message and exit
+  -d, --data-only  Do not print field names
 ```

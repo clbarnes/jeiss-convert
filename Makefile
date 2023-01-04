@@ -37,4 +37,9 @@ docs: clean-docs
 .PHONY: readme
 readme:
 	dat2hdf5 --help | p2c --tgt _dat2hdf5 README.md && \
-	dat2hdf5-verify --help | p2c --tgt _dat2hdf5-verify README.md
+	dat2hdf5-verify --help | p2c --tgt _dat2hdf5-verify README.md && \
+	datmeta --help | p2c --tgt _datmeta README.md && \
+	datmeta ls --help | p2c --tgt _datmeta-ls README.md && \
+	datmeta get --help | p2c --tgt _datmeta-get README.md && \
+	datmeta json --help | p2c --tgt _datmeta-json README.md && \
+	datmeta fmt --help | p2c --tgt _datmeta-fmt README.md

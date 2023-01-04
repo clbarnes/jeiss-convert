@@ -32,6 +32,7 @@ setup(
         "console_scripts": [
             "dat2hdf5=jeiss_convert.convert:_main",
             "dat2hdf5-verify=jeiss_convert.verify:_main",
+            "datmeta=jeiss_convert.meta:_main",
         ]
     },
     package_data={"": ["**/*.tsv", "**/*.toml"]},
