@@ -141,3 +141,5 @@ jeiss_convert/version.py
 
 docs/
 env/
+
+tmp/
