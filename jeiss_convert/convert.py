@@ -46,6 +46,12 @@ def main(args=None):
         "group", nargs="?", help="HDF5 group within the given file; must not exist"
     )
     parser.add_argument(
+        "-m",
+        "--minmax",
+        action="store_true",
+        help="Calculate each array's min and max values and store as attributes",
+    )
+    parser.add_argument(
         "-c",
         "--chunks",
         type=parse_chunks,

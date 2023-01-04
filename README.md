@@ -27,7 +27,8 @@ Alternatively, you can clone the repository and install locally:
 ### `dat2hdf5`
 
 ```_dat2hdf5
-usage: dat2hdf5 [-h] [-c CHUNKS] [-z COMPRESSION] [-B] [-o] [-f] [--version]
+usage: dat2hdf5 [-h] [-m] [-c CHUNKS] [-z COMPRESSION] [-B] [-o] [-f]
+                [--version]
                 dat hdf5 [group]
 
 Convert a Jeiss FIBSEM .dat file into a standard HDF5, preserving all known
@@ -41,6 +42,8 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
+  -m, --minmax          Calculate each array's min and max values and store as
+                        attributes
   -c CHUNKS, --chunks CHUNKS
                         Chunking scheme (default none) as a single integer for
                         a square chunk, comma-separated integers in XY, or
@@ -151,7 +154,8 @@ optional arguments:
 ```_datmeta-get
 usage: datmeta get [-h] [-d] dat [field ...]
 
-Read metadata values.
+Read metadata values. By default, a TSV with keys in the first column and
+values in the second (arrays JSON-serialised); key column can be omitted.
 
 positional arguments:
   dat              Path to .dat file
