@@ -143,3 +143,4 @@ docs/
 env/
 
 tmp/
+*.sif

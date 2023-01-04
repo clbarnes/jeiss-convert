@@ -5,6 +5,17 @@ Convert Jeiss .dat files into a well-documented, widely compatible format: HDF5.
 The goal of the project is to be the single piece of software which ever has to read Jeiss .dat files.
 Image your sample, run this script, and never think about the original .dat again.
 
+## Installation
+
+Install from GitHub using pip:
+
+    pip install git+https://github.com/clbarnes/jeiss-convert.git
+
+This will make the below command line scripts and the `jeiss_convert` package available in your current python environment.
+Preferably, specify a particular revision for pip to use.
+
+Consider using [pipx](https://pypa.github.io/pipx/) if you need the tool available outside of a virtual environment.
+
 ## Usage
 
 ### `dat2hdf5`
@@ -192,3 +203,11 @@ with ProcessPoolExecutor(N_PROCESSES) as p:
         DAT_ROOT.glob("**/*.dat"),  # recursively look for .dat files
     )
 ```
+
+## Containerisation
+
+This package can be containerised with the included [Apptainer](https://apptainer.org/) recipe.
+Use `make container` on linux (requires sudo) to create an image file `jeiss_convert.sif`.
+This file can be moved to any computer with the apptainer runtime installed, and executed with `apptainer exec jeiss_convert.sif <your_command>`, e.g `apptainer exec jeiss_convert.sif dat2hdf5 --version`.
+
+Depending on which directories you need to access, you may need to execute with [bind mounts](https://apptainer.org/docs/user/main/bind_paths_and_mounts.html#user-defined-bind-paths).

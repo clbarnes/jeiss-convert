@@ -1,0 +1,35 @@
+Bootstrap: docker
+From: python:3.10.8-bullseye
+
+%setup
+    mkdir -p \
+        $APPTAINER_ROOTFS/application/.git
+
+%files
+    ./jeiss_convert /application/jeiss_convert
+    ./.gitignore /application/.gitignore
+    ./.gitmodules /application/.gitmodules
+    ./LICENSE /application/LICENSE
+    ./pyproject.toml /application/pyproject.toml
+    ./setup.py /application/setup.py
+    ./README.md /application/README.md
+
+%post
+    cd /application
+    pip install -U pip setuptools wheel
+    pip install .
+    pip cache purge
+
+    VERSION=$(python -c 'import jeiss_convert as pkg; print(pkg.__version__)')
+    echo "version $VERSION" >> "$APPTAINER_LABELS"
+
+%labels
+    author Chris L. Barnes
+    email cb619@cam.ac.uk
+    url https://github.com/clbarnes/jeiss-convert
+    package jeiss_convert
+
+%help
+    jeiss_convert
+
+    Convert Jeiss .dat files into a well-documented, widely compatible format: HDF5.

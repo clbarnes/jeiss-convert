@@ -43,3 +43,7 @@ readme:
 	datmeta get --help | p2c --tgt _datmeta-get README.md && \
 	datmeta json --help | p2c --tgt _datmeta-json README.md && \
 	datmeta fmt --help | p2c --tgt _datmeta-fmt README.md
+
+.PHONY: container
+container:
+	sudo apptainer build --bind "$(shell pwd)/.git:/application/.git" jeiss_convert.sif ./Apptainer
