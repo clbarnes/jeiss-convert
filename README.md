@@ -16,6 +16,12 @@ Preferably, specify a particular revision for pip to use.
 
 Consider using [pipx](https://pypa.github.io/pipx/) if you need the tool available outside of a virtual environment.
 
+Alternatively, you can clone the repository and install locally:
+
+    git clone https://github.com/clbarnes/jeiss-convert.git
+    cd jeiss-convert
+    pip install .
+
 ## Usage
 
 ### `dat2hdf5`
@@ -211,3 +217,7 @@ Use `make container` on linux (requires sudo) to create an image file `jeiss_con
 This file can be moved to any computer with the apptainer runtime installed, and executed with `apptainer exec jeiss_convert.sif <your_command>`, e.g `apptainer exec jeiss_convert.sif dat2hdf5 --version`.
 
 Depending on which directories you need to access, you may need to execute with [bind mounts](https://apptainer.org/docs/user/main/bind_paths_and_mounts.html#user-defined-bind-paths).
+
+## Contributing
+
+Modifications to the Jeiss .dat spec should be contributed to the [jeiss-specs](https://github.com/clbarnes/jeiss-specs) project.
