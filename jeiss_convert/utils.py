@@ -6,10 +6,20 @@ from pathlib import Path
 
 import numpy as np
 
-from .misc import DEFAULT_AXIS_ORDER, DEFAULT_BYTE_ORDER, HEADER_LENGTH, SPEC_DIR
+from .misc import (
+    DEFAULT_AXIS_ORDER,
+    DEFAULT_BYTE_ORDER,
+    ENUM_DIR,
+    HEADER_LENGTH,
+    SPEC_DIR,
+)
 from .version import version
 
 logger = logging.getLogger(__name__)
+
+ENUM_NAME_SUFFIX = "__name"
+DATASET_PREFIX = "AI"
+DEFAULT_NAME_ENUMS = True
 
 
 def read_value(
@@ -35,6 +45,33 @@ def read_value(
     if not reshape:
         return data[0]
     return data.reshape(reshape, order=DEFAULT_AXIS_ORDER)
+
+
+class EnumMapping:
+    def __init__(self, values_names: list[tuple[int, str]]) -> None:
+        self._value_to_name = dict()
+        self._name_to_value = dict()
+        for v, n in values_names:
+            self._value_to_name[v] = n
+            self._name_to_value[n] = v
+
+        if len(self._value_to_name) != len(self._name_to_value):
+            raise ValueError("Bidirectional mappings must have same length")
+
+    def get_value(self, name: str) -> int:
+        return self._name_to_value[name]
+
+    def get_name(self, value: int) -> str:
+        return self._value_to_name[value]
+
+    @classmethod
+    def from_tsv(cls, fpath: Path):
+        out = []
+        with open(fpath) as f:
+            for line in f:
+                val_str, name = line.split("\t")
+                out.append((int(val_str), name.strip()))
+        return cls(out)
 
 
 class SpecTuple(tp.NamedTuple):
@@ -76,14 +113,20 @@ class SpecTuple(tp.NamedTuple):
             for line in f:
                 yield cls.from_line(line)
 
-    def read_into(self, f, out=None, force=False):
+    def read_into(self, f, out=None, force=False, name_enums=DEFAULT_NAME_ENUMS):
         if out is None:
             out = dict()
 
         if self.name in out and not force:
             return out
 
-        out[self.name] = read_value(f, self.dtype, self.offset, self.realise_shape(out))
+        val = read_value(f, self.dtype, self.offset, self.realise_shape(out))
+        out[self.name] = val
+
+        if name_enums and self.name in ENUMS:
+            name = ENUMS[self.name].get_name(val)
+            out[self.name + ENUM_NAME_SUFFIX] = name
+
         return out
 
     @classmethod
@@ -104,28 +147,33 @@ class SpecTuple(tp.NamedTuple):
         return arr.reshape(1)[0]
 
 
+ENUMS: dict[str, EnumMapping] = {
+    p.stem: EnumMapping.from_tsv(p) for p in ENUM_DIR.glob("*.tsv")
+}
+
+
 SPECS: dict[int, tuple[SpecTuple, ...]] = {
     int(tsv.stem[1:]): tuple(SpecTuple.from_file(tsv)) for tsv in SPEC_DIR.glob("*.tsv")
 }
 
 
-def _parse_with_version(b: bytes, version: int):
+def _parse_with_version(b: bytes, version: int, name_enums=DEFAULT_NAME_ENUMS):
     spec = SPECS[version]
     out = dict()
     for line in spec:
-        line.read_into(b, out)
+        line.read_into(b, out, name_enums=name_enums)
     return out
 
 
-def parse_bytes(b: bytes):
-    d = _parse_with_version(b, 0)
-    return _parse_with_version(b, d["FileVersion"])
+def parse_bytes(b: bytes, name_enums=DEFAULT_NAME_ENUMS):
+    d = _parse_with_version(b, 0, name_enums=name_enums)
+    return _parse_with_version(b, d["FileVersion"], name_enums=name_enums)
 
 
-def parse_file(fpath: Path):
+def parse_file(fpath: Path, name_enums=DEFAULT_NAME_ENUMS):
     with open(fpath, "rb") as f:
         b = f.read(HEADER_LENGTH)
-        return parse_bytes(b)
+        return parse_bytes(b, name_enums=name_enums)
 
 
 def write_header(data: dict[str, tp.Any]):
@@ -148,8 +196,8 @@ class ParsedData(tp.NamedTuple):
     footer: tp.Optional[bytes] = None
 
     @classmethod
-    def from_bytes(cls, b: bytes):
-        meta = parse_bytes(b)
+    def from_bytes(cls, b: bytes, name_enums=DEFAULT_NAME_ENUMS):
+        meta = parse_bytes(b, name_enums=name_enums)
         header = b[:HEADER_LENGTH]
         shape = (meta["ChanNum"], meta["XResolution"], meta["YResolution"])
         dtype = np.dtype("u1" if meta["EightBit"] else ">i2")
@@ -158,9 +206,9 @@ class ParsedData(tp.NamedTuple):
         return cls(meta, data, header, footer)
 
     @classmethod
-    def from_file(cls, fpath):
+    def from_file(cls, fpath: Path, name_enums=DEFAULT_NAME_ENUMS):
         with open(fpath, "rb") as f:
-            return cls.from_bytes(f.read())
+            return cls.from_bytes(f.read(), name_enums=name_enums)
 
     def header_hex(self) -> tp.Optional[str]:
         if self.header is None:
@@ -192,12 +240,14 @@ def metadata_to_numpy(meta: dict[str, tp.Any]) -> dict[str, tp.Any]:
 
 
 def split_channels(
-    dat_path: Path, json_metadata=False
+    dat_path: Path,
+    json_metadata=False,
+    name_enums=DEFAULT_NAME_ENUMS,
 ) -> tuple[dict[str, tp.Any], list[str], np.ndarray]:
-    all_data = ParsedData.from_file(dat_path)
+    all_data = ParsedData.from_file(dat_path, name_enums=name_enums)
     channel_names = []
     for input_id in range(1, 5):
-        ds = f"AI{input_id}"
+        ds = f"{DATASET_PREFIX}{input_id}"
 
         if all_data.meta[ds]:
             channel_names.append(ds)
@@ -259,7 +309,7 @@ def group_to_bytes(g, json_metadata=False, check_header=True):
 
     to_stack = []
     for input_id in range(1, 5):
-        ds_name = f"AI{input_id}"
+        ds_name = f"{DATASET_PREFIX}{input_id}"
         if ds_name not in g:
             continue
         to_stack.append(g[ds_name][:])

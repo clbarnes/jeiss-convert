@@ -9,7 +9,9 @@ Image your sample, run this script, and never think about the original .dat agai
 
 Install from GitHub using pip:
 
-    pip install git+https://github.com/clbarnes/jeiss-convert.git
+```sh
+pip install git+https://github.com/clbarnes/jeiss-convert.git
+```
 
 This will make the below command line scripts and the `jeiss_convert` package available in your current python environment.
 Preferably, specify a particular revision for pip to use.
@@ -18,11 +20,19 @@ Consider using [pipx](https://pypa.github.io/pipx/) if you need the tool availab
 
 Alternatively, you can clone the repository and install locally:
 
-    git clone https://github.com/clbarnes/jeiss-convert.git
-    cd jeiss-convert
-    pip install .
+```sh
+git clone https://github.com/clbarnes/jeiss-convert.git
+cd jeiss-convert
+pip install .
+```
 
 ## Usage
+
+Some metadata are integers which represent enumerated values (enums).
+By default, `jeiss-convert` associates the metadata key with the integer value,
+and additionally stores the meaning of the value under the same key suffixed with `__name` (note the double underscore).
+e.g. `{"FIBMode": 5}` in the `.dat` would be represented as
+`{"FibMode": 5, "FibMode__name": "SEM Drift Correction"}` in the output.
 
 ### `dat2hdf5`
 
@@ -33,7 +43,8 @@ usage: dat2hdf5 [-h] [-m] [-c CHUNKS] [-z COMPRESSION] [-B] [-o] [-f]
 
 Convert a Jeiss FIBSEM .dat file into a standard HDF5, preserving all known
 metadata as group attributes, as well as storing the raw header and footer
-bytes.
+bytes (under keys "_header" and "_footer" respectively), and the version
+string of the conversion tool ("_dat2hdf5_version").
 
 positional arguments:
   dat                   Path to a .dat file

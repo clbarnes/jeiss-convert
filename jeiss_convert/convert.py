@@ -2,7 +2,9 @@
 """
 Convert a Jeiss FIBSEM .dat file into a standard HDF5,
 preserving all known metadata as group attributes,
-as well as storing the raw header and footer bytes.
+as well as storing the raw header and footer bytes
+(under keys "_header" and "_footer" respectively),
+and the version string of the conversion tool ("_dat2hdf5_version").
 """
 import sys
 from argparse import ArgumentParser
