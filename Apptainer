@@ -33,3 +33,4 @@ From: python:3.10.9-bullseye
     jeiss_convert
 
     Convert Jeiss .dat files into a well-documented, widely compatible format: HDF5.
+    For more information, see the README inside this image at `/application/README.md`.
