@@ -1,20 +1,20 @@
+import datetime as dt
 import hashlib
 import logging
 import sys
 import typing as tp
 from io import BytesIO
-import datetime as dt
 from pathlib import Path
 
 import numpy as np
 
 from .misc import (
+    DATE_FORMAT,
     DEFAULT_AXIS_ORDER,
     DEFAULT_BYTE_ORDER,
     ENUM_DIR,
     HEADER_LENGTH,
     SPEC_DIR,
-    DATE_FORMAT,
 )
 from .version import version
 
