@@ -35,9 +35,9 @@ and additionally stores the meaning of the value under the same key suffixed wit
 e.g. `{"FIBMode": 5}` in the `.dat` would be represented as
 `{"FibMode": 5, "FibMode__name": "SEM Drift Correction"}` in the output.
 
-Additionally, string metadata which seem to be dates will be duplicated in ISO-8601 form with the key suffix `__iso`:
+Additionally, string metadata which seem to be dates will be duplicated in ISO-8601 form with the key suffix `__iso` (note the double underscore):
 e.g. `{"SWdate": "02/01/2023"}` (ambiguous, locale-dependent, not sortable) would be represented as
-`{"SWdate": "02/01/2023", "SWdate_iso": "2023-01-02"}` (internationally standardised) in the output.
+`{"SWdate": "02/01/2023", "SWdate__iso": "2023-01-02"}` (internationally standardised) in the output.
 
 ### `dat2hdf5`
 
