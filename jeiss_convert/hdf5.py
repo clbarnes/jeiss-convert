@@ -29,7 +29,7 @@ def dat_to_hdf5(
         By default None (no extra arguments).
     minmax : bool, optional
         If True, calculate each array's min and max values,
-        storing them as attributes in the HDF5.
+        storing them as attributes named as such in the HDF5.
         Default False.
     """
     meta, channel_names, data = split_channels(dat_path)
@@ -49,11 +49,12 @@ def dat_to_hdf5(
         g.attrs.update(meta)
 
         for idx, ds_name in enumerate(channel_names):
-            ds = g.create_dataset(ds_name, data=data[idx], **ds_kwargs)
+            arr = data[idx]
+            ds = g.create_dataset(ds_name, data=arr, **ds_kwargs)
 
             if minmax:
-                ds.attrs["min"] = data.min()
-                ds.attrs["max"] = data.max()
+                ds.attrs["min"] = arr.min()
+                ds.attrs["max"] = arr.max()
 
 
 def hdf5_to_bytes(hdf5_path, hdf5_group=None) -> bytes:

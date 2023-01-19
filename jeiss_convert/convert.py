@@ -118,7 +118,9 @@ def main(args=None):
     if parsed.fletcher32:
         ds_kwargs["fletcher32"]
 
-    dat_to_hdf5(parsed.dat, parsed.hdf5, parsed.group, ds_kwargs=ds_kwargs)
+    dat_to_hdf5(
+        parsed.dat, parsed.hdf5, parsed.group, ds_kwargs=ds_kwargs, minmax=parsed.minmax
+    )
     return 0
 
 
