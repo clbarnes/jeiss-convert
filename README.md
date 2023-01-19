@@ -4,6 +4,7 @@ Convert Jeiss .dat files into a well-documented, widely compatible format: HDF5.
 
 The goal of the project is to be the single piece of software which ever has to read Jeiss .dat files.
 Image your sample, run this script, and never think about the original .dat again.
+Additionally benefit from self-documenting metadata (including enums), separated channels, ISO-8601 dates, multiple images per file, and optionally compression and corruption detection.
 
 ## Installation
 
@@ -33,6 +34,10 @@ By default, `jeiss-convert` associates the metadata key with the integer value,
 and additionally stores the meaning of the value under the same key suffixed with `__name` (note the double underscore).
 e.g. `{"FIBMode": 5}` in the `.dat` would be represented as
 `{"FibMode": 5, "FibMode__name": "SEM Drift Correction"}` in the output.
+
+Additionally, string metadata which seem to be dates will be duplicated in ISO-8601 form with the key suffix `__iso`:
+e.g. `{"SWdate": "02/01/2023"}` (ambiguous, locale-dependent, not sortable) would be represented as
+`{"SWdate": "02/01/2023", "SWdate_iso": "2023-01-02"}` (internationally standardised) in the output.
 
 ### `dat2hdf5`
 
