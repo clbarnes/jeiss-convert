@@ -3,6 +3,7 @@ import logging
 import sys
 import typing as tp
 from io import BytesIO
+import datetime as dt
 from pathlib import Path
 
 import numpy as np
@@ -13,6 +14,7 @@ from .misc import (
     ENUM_DIR,
     HEADER_LENGTH,
     SPEC_DIR,
+    DATE_FORMAT,
 )
 from .version import version
 
@@ -201,9 +203,30 @@ def _parse_with_version(b: bytes, version: int, name_enums=DEFAULT_NAME_ENUMS):
     return out
 
 
+def handle_dates(d: dict[str, tp.Any]) -> dict[str, tp.Any]:
+    to_add = dict()
+
+    for k, v in d.items():
+        if not isinstance(v, str):
+            continue
+
+        try:
+            datetime = dt.datetime.strptime(v, DATE_FORMAT)
+        except ValueError:
+            continue
+
+        to_add[k + "__iso"] = datetime.date().isoformat()
+
+    d.update(to_add)
+    return d
+
+
 def parse_bytes(b: bytes, name_enums=DEFAULT_NAME_ENUMS):
     d = _parse_with_version(b, 0, name_enums=name_enums)
-    return _parse_with_version(b, d["FileVersion"], name_enums=name_enums)
+    out = _parse_with_version(b, d["FileVersion"], name_enums=name_enums)
+    if name_enums:
+        out = handle_dates(out)
+    return out
 
 
 def parse_file(fpath: Path, name_enums=DEFAULT_NAME_ENUMS):
