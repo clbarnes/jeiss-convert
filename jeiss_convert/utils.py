@@ -9,6 +9,7 @@ from pathlib import Path
 import numpy as np
 
 from .misc import (
+    DATE_FIELDS,
     DATE_FORMAT,
     DEFAULT_AXIS_ORDER,
     DEFAULT_BYTE_ORDER,
@@ -206,8 +207,9 @@ def _parse_with_version(b: bytes, version: int, name_enums=DEFAULT_NAME_ENUMS):
 def handle_dates(d: dict[str, tp.Any]) -> dict[str, tp.Any]:
     to_add = dict()
 
-    for k, v in d.items():
-        if not isinstance(v, str):
+    for k in DATE_FIELDS:
+        v = d.get(k)
+        if v is None:
             continue
 
         try:
