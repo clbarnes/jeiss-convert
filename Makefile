@@ -16,6 +16,10 @@ lint-type: lint
 test:
 	pytest --verbose
 
+.PHONY: test
+test-skipfull:
+	pytest --verbose --skip-full
+
 .PHONY: install
 install:
 	pip install .
