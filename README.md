@@ -256,4 +256,27 @@ Depending on which directories you need to access, you may need to execute with 
 
 ## Contributing
 
+### Jeiss specifications
+
 Modifications to the Jeiss .dat spec should be contributed to the [jeiss-specs](https://github.com/clbarnes/jeiss-specs) project.
+
+### Testing
+
+Tests can be run (using `pytest`) with `make test`.
+
+`jeiss-specs` contains sample headers for some specification versions.
+It also includes URLs where full `.dat` files can be downloaded (which will be handled automatically),
+but these are large and slow to download.
+
+Tests requiring full `.dat` files can be skipped with `make test-skipfull` (or `pytest --skip-full`).
+
+By default all tests run against all versions, and skip where test files are not available.
+
+### Non-goals
+
+Pull requests implementing a public-facing API for reading data from .dat files directly will likely not be accepted.
+
+This package is not intended to make it easy to read .dat files.
+It is intended to ensure that .dat files are read exactly once:
+so that they can be converted to a widely-supported, well-documented, self-documenting format (HDF5),
+and then deleted.
