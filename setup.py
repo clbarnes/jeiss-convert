@@ -17,6 +17,7 @@ setup(
         "numpy",
         "h5py",
         "tomli; python_version < '3.11'",
+        "backports.strenum; python_version < '3.11'",
     ],
     python_requires=">=3.9, <4.0",
     classifiers=[

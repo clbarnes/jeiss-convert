@@ -3,6 +3,7 @@ import logging
 import typing as tp
 from io import BytesIO
 from pathlib import Path
+import sys
 
 import numpy as np
 
@@ -15,6 +16,12 @@ from .misc import (
 )
 from .version import version
 
+if sys.version_info < (3, 11):
+    from backports.strenum import StrEnum
+else:
+    from enum import StrEnum
+
+
 logger = logging.getLogger(__name__)
 
 ENUM_NAME_SUFFIX = "__name"
@@ -22,28 +29,57 @@ DATASET_PREFIX = "AI"
 DEFAULT_NAME_ENUMS = True
 
 
+class EoFBehavior(StrEnum):
+    IGNORE = "ignore"
+    WARN = "warn"
+    ERROR = "error"
+
+    @classmethod
+    def default(cls):
+        return cls.ERROR
+
+
 def read_value(
     buffer: bytes,
     dtype: np.dtype,
     offset: int = 0,
     shape: tp.Optional[tuple[int, ...]] = None,
+    eof=EoFBehavior.ERROR,
 ):
+    # assume no reshaping required (singleton or 1D)
+    reshape = None
+
     if not shape:
-        reshape = None
+        # read a single value
         count = 1
     else:
-        try:
+        if np.isscalar(shape):
+            count = shape
+        elif len(shape) == 1:
+            count = shape[0]
+        else:
+            # output is >1D
             reshape = tuple(shape)
             count = np.prod(reshape)
-        except TypeError:
-            count = shape
-            reshape = None
 
     data = np.frombuffer(buffer, dtype, count, offset=offset)
     if len(data) < count:
-        raise RuntimeError(f"Count not read {count} items from byte {offset}")
-    if not reshape:
+        if eof == EoFBehavior.ERROR:
+            raise RuntimeError(f"Could not read {count} items from byte {offset}")
+        elif eof == EoFBehavior.WARN:
+            logger.warning("Could not read %s items from byte %s", count, offset)
+
+        # if not error, pad right with 0s
+        data = np.pad(data, [(0, count - len(data))])
+
+    if not shape:
+        # want singleton
         return data[0]
+
+    if reshape is None:
+        # wanted 1D array
+        return data
+
     return data.reshape(reshape, order=DEFAULT_AXIS_ORDER)
 
 
@@ -196,19 +232,26 @@ class ParsedData(tp.NamedTuple):
     footer: tp.Optional[bytes] = None
 
     @classmethod
-    def from_bytes(cls, b: bytes, name_enums=DEFAULT_NAME_ENUMS):
+    def from_bytes(
+        cls, b: bytes, name_enums=DEFAULT_NAME_ENUMS, eof=EoFBehavior.default()
+    ):
         meta = parse_bytes(b, name_enums=name_enums)
         header = b[:HEADER_LENGTH]
         shape = (meta["ChanNum"], meta["XResolution"], meta["YResolution"])
         dtype = np.dtype("u1" if meta["EightBit"] else ">i2")
-        data = read_value(b, dtype, HEADER_LENGTH, shape)
-        footer = b[int(HEADER_LENGTH + np.prod(shape) * dtype.itemsize) :]
+        data = read_value(b, dtype, HEADER_LENGTH, shape, eof)
+
+        footer_starts = int(HEADER_LENGTH + data.nbytes)
+        footer = b[footer_starts:]
+
         return cls(meta, data, header, footer)
 
     @classmethod
-    def from_file(cls, fpath: Path, name_enums=DEFAULT_NAME_ENUMS):
+    def from_file(
+        cls, fpath: Path, name_enums=DEFAULT_NAME_ENUMS, eof=EoFBehavior.default()
+    ):
         with open(fpath, "rb") as f:
-            return cls.from_bytes(f.read(), name_enums=name_enums)
+            return cls.from_bytes(f.read(), name_enums=name_enums, eof=eof)
 
     def header_hex(self) -> tp.Optional[str]:
         if self.header is None:
@@ -243,8 +286,9 @@ def split_channels(
     dat_path: Path,
     json_metadata=False,
     name_enums=DEFAULT_NAME_ENUMS,
+    eof=EoFBehavior.default(),
 ) -> tuple[dict[str, tp.Any], list[str], np.ndarray]:
-    all_data = ParsedData.from_file(dat_path, name_enums=name_enums)
+    all_data = ParsedData.from_file(dat_path, name_enums=name_enums, eof=eof)
     channel_names = []
     for input_id in range(1, 5):
         ds = f"{DATASET_PREFIX}{input_id}"
@@ -278,11 +322,10 @@ def get_bytes(d: dict[str, tp.Any], key: str):
         return bytes.fromhex(val)
     elif isinstance(val, np.ndarray):
         return val.tobytes()
-    else:
-        raise ValueError(
-            "Expected str (hex-encoded) or uint8 numpy array "
-            f"to convert into bytes, got {type(val)}"
-        )
+    raise ValueError(
+        "Expected str (hex-encoded) or numpy array "
+        f"to convert into bytes, got {type(val)}"
+    )
 
 
 def md5sum(b):
