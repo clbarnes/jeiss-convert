@@ -1,10 +1,18 @@
 #!/usr/bin/env python3
 """
-Convert a Jeiss FIBSEM .dat file into a standard HDF5,
-preserving all known metadata as group attributes,
-as well as storing the raw header and footer bytes
+Convert a Jeiss FIBSEM .dat file into a standard HDF5 group
+(which may be the container's root),
+preserving all known metadata as group attributes.
+Additionally stores the raw header and footer bytes as uint8 arrays
 (under keys "_header" and "_footer" respectively),
-and the version string of the conversion tool ("_dat2hdf5_version").
+the version string of the conversion tool ("_dat2hdf5_version").
+
+Each channel which exists is stored as a dataset within the group
+named "AI1", "AI2", ..., based on the original base-1 channel index
+("AI" stands for "Analogue Input").
+Channel datasets optionally store the minimum and maximum values
+as attributes "min" and "max".
+Datasets may optionally be chunked, compressed, and/or have other filters applied.
 """
 import sys
 from argparse import ArgumentParser

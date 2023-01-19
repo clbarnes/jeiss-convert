@@ -1,9 +1,9 @@
 import hashlib
 import logging
+import sys
 import typing as tp
 from io import BytesIO
 from pathlib import Path
-import sys
 
 import numpy as np
 
@@ -242,7 +242,10 @@ class ParsedData(tp.NamedTuple):
         data = read_value(b, dtype, HEADER_LENGTH, shape, eof)
 
         footer_starts = int(HEADER_LENGTH + data.nbytes)
-        footer = b[footer_starts:]
+        if footer_starts >= len(b):
+            footer = None
+        else:
+            footer = b[footer_starts:]
 
         return cls(meta, data, header, footer)
 
