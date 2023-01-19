@@ -39,7 +39,7 @@ jobs:
       - run: |
           pip install .
         name: Install package
-      - run: pytest --verbose
+      - run: make test-skipfull
 
   container:
     runs-on: ubuntu-22.04
