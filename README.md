@@ -1,10 +1,12 @@
 # jeiss-convert
 
-Convert Jeiss .dat files into a well-documented, widely compatible format: HDF5.
+Losslessly convert Jeiss .dat files into a well-documented, widely compatible format: HDF5.
 
 The goal of the project is to be the single piece of software which ever has to read Jeiss .dat files.
 Image your sample, run this script, and never think about the original .dat again.
 Additionally benefit from self-documenting metadata (including enums), separated channels, ISO-8601 dates, multiple images per file, and optionally compression and corruption detection.
+
+Other processing steps, such as dropping channels, rescaling values, and more complex tasks such as contrast correction and stack alignment, are out of scope for this package and should target the HDF5s produced here.
 
 ## Installation
 
@@ -212,7 +214,7 @@ DS_KWARGS = {
 
 for dat_path in sorted(DAT_ROOT.glob("*.dat")):
     group_name = dat_path.stem
-    dat_to_hdf5(dat_path, HDF5_PATH, group_name, ds_kwargs=**DS_KWARGS)
+    dat_to_hdf5(dat_path, HDF5_PATH, group_name, ds_kwargs=DS_KWARGS)
 ```
 
 Or, to recursively discover .dat files in a directory and write each into the root of a separate HDF5 file, in parallel:
