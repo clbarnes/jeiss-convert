@@ -1,9 +1,12 @@
 import typing as tp
 from pathlib import Path
+import logging
 
 import h5py
 
 from .utils import group_to_bytes, split_channels
+
+logger = logging.getLogger(__name__)
 
 
 def dat_to_hdf5(
@@ -56,6 +59,9 @@ def dat_to_hdf5(
                 ds.attrs["min"] = arr.min()
                 ds.attrs["max"] = arr.max()
 
+        h5.flush()
+        h5.attrs["_is_complete"] = True
+
 
 def hdf5_to_bytes(hdf5_path, hdf5_group=None) -> bytes:
     """Convert an HDF5 group into the contents of a .dat file.
@@ -80,5 +86,9 @@ def hdf5_to_bytes(hdf5_path, hdf5_group=None) -> bytes:
 
     with h5py.File(hdf5_path) as h5:
         g = h5[hdf5_group]
+        if not g.attrs.get("_is_complete"):
+            logger.warning(
+                "'_is_complete' flag missing; writing was probably interrupted"
+            )
         b = group_to_bytes(g)
     return b
