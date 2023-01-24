@@ -13,13 +13,24 @@ named "AI1", "AI2", ..., based on the original base-1 channel index
 Channel datasets optionally store the minimum and maximum values
 as attributes "min" and "max".
 Datasets may optionally be chunked, compressed, and/or have other filters applied.
+
+Lastly, additional metadata from a CSV indexed by acquisition date and time
+can be included as attributes on an empty "additional_metadata" subgroup.
 """
+import datetime as dt
+import logging
 import sys
+import typing as tp
 from argparse import ArgumentParser
 from pathlib import Path
 
+import pandas as pd
+
+from .csvmeta import datetime_from_path, get_csv_metadata
 from .hdf5 import dat_to_hdf5
 from .version import version
+
+logger = logging.getLogger(__name__)
 
 
 def parse_chunks(s: str):
@@ -46,6 +57,39 @@ def parse_compression(s: str):
         return c
 
     raise ValueError(f"Unknown compression type '{s}'")
+
+
+def parse_csv_metadata(
+    dat_path: Path,
+    csv_path: tp.Optional[Path],
+    datetime: tp.Optional[dt.datetime],
+    datetime_pattern: tp.Optional[str],
+) -> tp.Optional[dict[str, tp.Any]]:
+    if datetime and datetime_pattern:
+        raise ValueError(
+            "Explicit datetime and datetime_pattern given; only one should be given"
+        )
+
+    if not csv_path:
+        if datetime or datetime_pattern:
+            logger.warning(
+                "datetime and datetime_pattern given, but no csv_path; ignoring"
+            )
+
+        return None
+
+    elif datetime_pattern:
+
+        datetime = datetime_from_path(dat_path, datetime_pattern)
+
+    elif not datetime:
+        raise ValueError(
+            "CSV path given but no datetime or datetime_pattern, cannot identify entry"
+        )
+
+    df = pd.read_csv(csv_path)
+
+    return get_csv_metadata(df, datetime)
 
 
 def main(args=None):
@@ -107,6 +151,37 @@ def main(args=None):
         help="Checksum each chunk to allow detection of corruption",
     )
     parser.add_argument(
+        "--csv-path",
+        "-p",
+        type=Path,
+        help=(
+            "Path to metadata CSV. "
+            "Must be paired with --datetime (-d) or --datetime-pattern (-D) "
+            "so that the file can be matched to an entry."
+        ),
+    )
+    parser.add_argument(
+        "--datetime",
+        "-d",
+        type=dt.datetime.fromisoformat,
+        help=(
+            "Acquisition datetime in ISO-8601 format; "
+            "only used to match file to its entry in a metadata CSV"
+        ),
+    )
+    parser.add_argument(
+        "--datetime-pattern",
+        "-D",
+        help=(
+            r"Dfregex (i.e. regex plus C-like date/time codes) "
+            "showing how to parse the acquisition date and time from the filename; "
+            "only used to match file to its entry in a metadata CSV. "
+            "See here for more details: "
+            "https://github.com/stephen-zhao/datetime_matcher"
+            "#dfregex-syntax-informal-spec"
+        ),
+    )
+    parser.add_argument(
         "--version",
         action="version",
         version=version,
@@ -126,8 +201,17 @@ def main(args=None):
     if parsed.fletcher32:
         ds_kwargs["fletcher32"]
 
+    meta = parse_csv_metadata(
+        parsed.dat, parsed.csv_path, parsed.datetime, parsed.datetime_pattern
+    )
+
     dat_to_hdf5(
-        parsed.dat, parsed.hdf5, parsed.group, ds_kwargs=ds_kwargs, minmax=parsed.minmax
+        parsed.dat,
+        parsed.hdf5,
+        parsed.group,
+        ds_kwargs=ds_kwargs,
+        minmax=parsed.minmax,
+        additional_metadata=meta,
     )
     return 0
 

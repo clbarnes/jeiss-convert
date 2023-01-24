@@ -41,11 +41,19 @@ Additionally, date fields (listed and serialised according to the format specifi
 e.g. `{"SWdate": "02/01/2023"}` (ambiguous, locale-dependent, not sortable) would be represented as
 `{"SWdate": "02/01/2023", "SWdate__iso": "2023-01-02"}` (internationally standardised) in the output.
 
+Jeiss microscopes can output CSV files with additional metadata.
+This metadata can be stored as attributes on an empty group in the output HDF5,
+so long as the correct row can be found based on the .dat file's acquisition date.
+This can be given explicitly or parsed from file path.
+Again, the non-standard `Date` field and the `Time` field are used to create an additional
+`Datetime__iso` field.
+
 ### `dat2hdf5`
 
 ```_dat2hdf5
 usage: dat2hdf5 [-h] [-m] [-c CHUNKS] [-z COMPRESSION] [-B] [-o] [-f]
-                [--version]
+                [--csv-path CSV_PATH] [--datetime DATETIME]
+                [--datetime-pattern DATETIME_PATTERN] [--version]
                 dat hdf5 [group]
 
 Convert a Jeiss FIBSEM .dat file into a standard HDF5 group (which may be the
@@ -57,7 +65,9 @@ a dataset within the group named "AI1", "AI2", ..., based on the original
 base-1 channel index ("AI" stands for "Analogue Input"). Channel datasets
 optionally store the minimum and maximum values as attributes "min" and "max".
 Datasets may optionally be chunked, compressed, and/or have other filters
-applied.
+applied. Lastly, additional metadata from a CSV indexed by acquisition date
+and time can be included as attributes on an empty "additional_metadata"
+subgroup.
 
 positional arguments:
   dat                   Path to a .dat file
@@ -80,6 +90,20 @@ optional arguments:
   -o, --scale-offset    Apply the scale-offset filter, which may decrease size
                         of chunked data.
   -f, --fletcher32      Checksum each chunk to allow detection of corruption
+  --csv-path CSV_PATH, -p CSV_PATH
+                        Path to metadata CSV. Must be paired with --datetime
+                        (-d) or --datetime-pattern (-D) so that the file can
+                        be matched to an entry.
+  --datetime DATETIME, -d DATETIME
+                        Acquisition datetime in ISO-8601 format; only used to
+                        match file to its entry in a metadata CSV
+  --datetime-pattern DATETIME_PATTERN, -D DATETIME_PATTERN
+                        Dfregex (i.e. regex plus C-like date/time codes)
+                        showing how to parse the acquisition date and time
+                        from the filename; only used to match file to its
+                        entry in a metadata CSV. See here for more details:
+                        https://github.com/stephen-
+                        zhao/datetime_matcher#dfregex-syntax-informal-spec
   --version             show program's version number and exit
 ```
 
@@ -259,6 +283,37 @@ with ProcessPoolExecutor(N_PROCESSES) as p:
     )
 ```
 
+There are additional helper methods for reading metadata from a pandas.DataFrame.
+DataFrames must have string `"Date"` and `"Time"` columns
+in `dd/mm/YYYY` and `HH:MM:SS` format respectively.
+
+```python
+import datetime as dt
+from pathlib import Path
+
+import pandas as pd
+from jeiss_convert import dat_to_hdf5, get_csv_metadata, datetime_from_path
+
+dat_path = Path("path/to/data_2023-01-24_172320_0-0-0.dat)
+metadata = pd.read_csv(Path("path/to/metadata.csv"))
+
+acquisition_datetime = datetime_from_path(
+    dat_path,
+    r".*/data_%Y-%m-%d_%H%M%S_\d+-\d+-\d+\.dat$",
+)
+
+meta = get_csv_metadata(
+    metadata,
+    acquisition_datetime,  # used to find correct row
+)
+
+dat_to_hdf5(
+    dat_path,
+    ...,  # other args
+    additional_metadata=meta,
+)
+```
+
 ## Containerisation
 
 This package can be containerised with the included [Apptainer](https://apptainer.org/) recipe.
@@ -291,5 +346,118 @@ Pull requests implementing a public-facing API for reading data from .dat files 
 
 This package is not intended to make it easy to read .dat files.
 It is intended to ensure that .dat files are read exactly once:
+so that they can be converted to a widely-supported, well-documented, self-documenting format (HDF5),
+and then deleted.
+".hdf5")
+
+    # ensure that all ancestor directories exist
+    hdf5_path.parent.mkdir(parents=True, exist_ok=True)
+
+    return dat_to_hdf5(
+        dat_path,
+        hdf5_path,
+        ds_kwargs=DS_KWARGS,
+    )
+
+
+with ProcessPoolExecutor(N_PROCESSES) as p:
+    p.map(
+        worker_fn,
+        DAT_ROOT.glob("**/*.dat"),  # recursively look for .dat files
+    )
+```
+
+## Containerisation
+
+This package can be containerised with the included [Apptainer](https://apptainer.org/) recipe.
+Use `make container` on linux (requires sudo) to create an image file `jeiss_convert.sif`.
+This file can be moved to any computer with the apptainer runtime installed, and executed with `apptainer exec jeiss_convert.sif <your_command>`, e.g `apptainer exec jeiss_convert.sif dat2hdf5 --version`.
+
+Depending on which directories you need to access, you may need to execute with [bind mounts](https://apptainer.org/docs/user/main/bind_paths_and_mounts.html#user-defined-bind-paths).
+
+## Contributing
+
+### Jeiss specifications
+
+Modifications to the Jeiss .dat spec should be contributed to the [jeiss-specs](https://github.com/clbarnes/jeiss-specs) project.
+
+### Testing
+
+Tests can be run (using `pytest`) with `make test`.
+
+`jeiss-specs` contains sample headers for some specification versions.
+It also includes URLs where full `.dat` files can be downloaded (which will be handled automatically),
+but these are large and slow to download.
+
+Tests requiring full `.dat` files can be skipped with `make test-skipfull` (or `pytest --skip-full`).
+
+By default all tests run against all versions, and skip where test files are not available.
+
+### Non-goals
+
+Pull requests implementing a public-facing API for reading data from .dat files directly will likely not be accepted.
+
+This package is not intended to make it easy to read .dat files.
+It is intended to ensure that .dat files are read exactly once:
+so that they can be converted to a widely-supported, well-documented, self-documenting format (HDF5),
+and then deleted.
+ to the Jeiss .dat spec should be contributed to the [jeiss-specs](https://github.com/clbarnes/jeiss-specs) project.
+
+### Testing
+
+Tests can be run (using `pytest`) with `make test`.
+
+`jeiss-specs` contains sample headers for some specification versions.
+It also includes URLs where full `.dat` files can be downloaded (which will be handled automatically),
+but these are large and slow to download.
+
+Tests requiring full `.dat` files can be skipped with `make test-skipfull` (or `pytest --skip-full`).
+
+By default all tests run against all versions, and skip where test files are not available.
+
+### Non-goals
+
+Pull requests implementing a public-facing API for reading data from .dat files directly will likely not be accepted.
+
+This package is not intended to make it easy to read .dat files.
+It is intended to ensure that .dat files are read exactly once:
+so that they can be converted to a widely-supported, well-documented, self-documenting format (HDF5),
+and then deleted.
+ead .dat files.
+It is intended to ensure that .dat files are read exactly once:
+so that they can be converted to a widely-supported, well-documented, self-documenting format (HDF5),
+and then deleted.
+ntended to ensure that .dat files are read exactly once:
+so that they can be converted to a widely-supported, well-documented, self-documenting format (HDF5),
+and then deleted.
+nting format (HDF5),
+and then deleted.
+ead .dat files.
+It is intended to ensure that .dat files are read exactly once:
+so that they can be converted to a widely-supported, well-documented, self-documenting format (HDF5),
+and then deleted.
+ntended to ensure that .dat files are read exactly once:
+so that they can be converted to a widely-supported, well-documented, self-documenting format (HDF5),
+and then deleted.
+nted, self-documenting format (HDF5),
+and then deleted.
+nting format (HDF5),
+and then deleted.
+ead .dat files.
+It is intended to ensure that .dat files are read exactly once:
+so that they can be converted to a widely-supported, well-documented, self-documenting format (HDF5),
+and then deleted.
+ntended to ensure that .dat files are read exactly once:
+so that they can be converted to a widely-supported, well-documented, self-documenting format (HDF5),
+and then deleted.
+d, self-documenting format (HDF5),
+and then deleted.
+nting format (HDF5),
+and then deleted.
+ead .dat files.
+It is intended to ensure that .dat files are read exactly once:
+so that they can be converted to a widely-supported, well-documented, self-documenting format (HDF5),
+and then deleted.
+ntended to ensure that .dat files are read exactly once:
 so that they can be converted to a widely-supported, well-documented, self-documenting format (HDF5),
 and then deleted.

@@ -1,6 +1,6 @@
+import logging
 import typing as tp
 from pathlib import Path
-import logging
 
 import h5py
 
@@ -9,12 +9,16 @@ from .utils import group_to_bytes, split_channels
 logger = logging.getLogger(__name__)
 
 
+SUBGROUP_NAME = "additional_metadata"
+
+
 def dat_to_hdf5(
     dat_path: Path,
     container_path: Path,
     group_name: tp.Optional[str] = None,
     ds_kwargs: tp.Optional[dict[str, tp.Any]] = None,
     minmax: bool = False,
+    additional_metadata: tp.Optional[dict[str, dict[str, tp.Any]]] = None,
 ):
     """Convert a dat file to an HDF5 file.
 
@@ -34,6 +38,10 @@ def dat_to_hdf5(
         If True, calculate each array's min and max values,
         storing them as attributes named as such in the HDF5.
         Default False.
+    additional_metadata : dict[str, Any], optional
+        A dict of attributes to be stored on an ``"additional_metadata"`` subgroup.
+        This subgroup exists solely to store this additional metadata.
+        If None (default), subgroup will not be created.
     """
     meta, channel_names, data = split_channels(dat_path)
 
@@ -59,8 +67,12 @@ def dat_to_hdf5(
                 ds.attrs["min"] = arr.min()
                 ds.attrs["max"] = arr.max()
 
+        if additional_metadata is not None:
+            g2 = g.create_group(SUBGROUP_NAME)
+            g2.attrs.update(additional_metadata)
+
         h5.flush()
-        h5.attrs["_is_complete"] = True
+        g.attrs["_is_complete"] = True
 
 
 def hdf5_to_bytes(hdf5_path, hdf5_group=None) -> bytes:
