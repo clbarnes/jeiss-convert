@@ -206,6 +206,11 @@ def _parse_with_version(b: bytes, version: int, name_enums=DEFAULT_NAME_ENUMS):
     return out
 
 
+def parse_datetime(b: np.ndarray, date_format=DATE_FORMAT, encoding="UTF-8"):
+    s = np.asarray(b).tobytes().decode(encoding)
+    return dt.datetime.strptime(s, date_format)
+
+
 def handle_dates(d: dict[str, tp.Any]) -> dict[str, tp.Any]:
     to_add = dict()
 
@@ -215,7 +220,7 @@ def handle_dates(d: dict[str, tp.Any]) -> dict[str, tp.Any]:
             continue
 
         try:
-            datetime = dt.datetime.strptime(v, DATE_FORMAT)
+            datetime = parse_datetime(v)
         except ValueError:
             continue
 
