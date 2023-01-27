@@ -34,8 +34,8 @@ pip install .
 Some metadata are integers which represent enumerated values (enums).
 By default, `jeiss-convert` associates the metadata key with the integer value,
 and additionally stores the meaning of the value under the same key suffixed with `__name` (note the double underscore).
-e.g. `{"FIBMode": 5}` in the `.dat` would be represented as
-`{"FibMode": 5, "FibMode__name": "SEM Drift Correction"}` in the output.
+e.g. `{"Mode": 5}` in the `.dat` would be represented as
+`{"Mode": 5, "Mode__name": "SEM Drift Correction"}` in the output.
 
 Additionally, date fields (listed and serialised according to the format specified in `jeiss-specs/misc.toml`) will be duplicated in ISO-8601 form with the key suffix `__iso` (note the double underscore):
 e.g. `{"SWdate": "02/01/2023"}` (ambiguous, locale-dependent, not sortable) would be represented as
