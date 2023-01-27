@@ -132,25 +132,25 @@ class SpecTuple(tp.NamedTuple):
         return tuple(out)
 
     @classmethod
-    def from_line(cls, line: str):
-        items = line.strip().split("\t")
+    def from_line(cls, line: str, headers: list[str]):
+        items = dict(zip(headers, line.strip().split("\t")))
+
         shape = []
-        for item in items[3].split(","):
+        for item in items["shape"].split(","):
             item = item.strip()
             try:
                 shape.append(int(item))
             except ValueError:
                 shape.append(item)
 
-        return cls(items[0], np.dtype(items[1]), int(items[2]), tuple(shape))
+        return cls(items["name"], np.dtype(items["dtype"]), int(items["offset"]), tuple(shape))
 
     @classmethod
-    def from_file(cls, path, skip_header=True):
+    def from_file(cls, path):
         with open(path) as f:
-            if skip_header:
-                next(f)
+            headers = [s.strip() for s in next(f).split("\t")]
             for line in f:
-                yield cls.from_line(line)
+                yield cls.from_line(line, headers)
 
     def read_into(self, f, out=None, force=False, name_enums=DEFAULT_NAME_ENUMS):
         if out is None:
