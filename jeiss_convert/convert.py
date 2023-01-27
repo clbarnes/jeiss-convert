@@ -199,7 +199,7 @@ def main(args=None):
     if parsed.byte_shuffle:
         ds_kwargs["shuffle"] = True
     if parsed.fletcher32:
-        ds_kwargs["fletcher32"]
+        ds_kwargs["fletcher32"] = True
 
     meta = parse_csv_metadata(
         parsed.dat, parsed.csv_path, parsed.datetime, parsed.datetime_pattern
