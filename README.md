@@ -277,10 +277,11 @@ def worker_fn(dat_path: Path):
 
 
 with ProcessPoolExecutor(N_PROCESSES) as p:
-    p.map(
+    for _ in p.map(
         worker_fn,
         DAT_ROOT.glob("**/*.dat"),  # recursively look for .dat files
-    )
+    ):
+        pass
 ```
 
 There are additional helper methods for reading metadata from a pandas.DataFrame.
@@ -346,118 +347,5 @@ Pull requests implementing a public-facing API for reading data from .dat files 
 
 This package is not intended to make it easy to read .dat files.
 It is intended to ensure that .dat files are read exactly once:
-so that they can be converted to a widely-supported, well-documented, self-documenting format (HDF5),
-and then deleted.
-".hdf5")
-
-    # ensure that all ancestor directories exist
-    hdf5_path.parent.mkdir(parents=True, exist_ok=True)
-
-    return dat_to_hdf5(
-        dat_path,
-        hdf5_path,
-        ds_kwargs=DS_KWARGS,
-    )
-
-
-with ProcessPoolExecutor(N_PROCESSES) as p:
-    p.map(
-        worker_fn,
-        DAT_ROOT.glob("**/*.dat"),  # recursively look for .dat files
-    )
-```
-
-## Containerisation
-
-This package can be containerised with the included [Apptainer](https://apptainer.org/) recipe.
-Use `make container` on linux (requires sudo) to create an image file `jeiss_convert.sif`.
-This file can be moved to any computer with the apptainer runtime installed, and executed with `apptainer exec jeiss_convert.sif <your_command>`, e.g `apptainer exec jeiss_convert.sif dat2hdf5 --version`.
-
-Depending on which directories you need to access, you may need to execute with [bind mounts](https://apptainer.org/docs/user/main/bind_paths_and_mounts.html#user-defined-bind-paths).
-
-## Contributing
-
-### Jeiss specifications
-
-Modifications to the Jeiss .dat spec should be contributed to the [jeiss-specs](https://github.com/clbarnes/jeiss-specs) project.
-
-### Testing
-
-Tests can be run (using `pytest`) with `make test`.
-
-`jeiss-specs` contains sample headers for some specification versions.
-It also includes URLs where full `.dat` files can be downloaded (which will be handled automatically),
-but these are large and slow to download.
-
-Tests requiring full `.dat` files can be skipped with `make test-skipfull` (or `pytest --skip-full`).
-
-By default all tests run against all versions, and skip where test files are not available.
-
-### Non-goals
-
-Pull requests implementing a public-facing API for reading data from .dat files directly will likely not be accepted.
-
-This package is not intended to make it easy to read .dat files.
-It is intended to ensure that .dat files are read exactly once:
-so that they can be converted to a widely-supported, well-documented, self-documenting format (HDF5),
-and then deleted.
- to the Jeiss .dat spec should be contributed to the [jeiss-specs](https://github.com/clbarnes/jeiss-specs) project.
-
-### Testing
-
-Tests can be run (using `pytest`) with `make test`.
-
-`jeiss-specs` contains sample headers for some specification versions.
-It also includes URLs where full `.dat` files can be downloaded (which will be handled automatically),
-but these are large and slow to download.
-
-Tests requiring full `.dat` files can be skipped with `make test-skipfull` (or `pytest --skip-full`).
-
-By default all tests run against all versions, and skip where test files are not available.
-
-### Non-goals
-
-Pull requests implementing a public-facing API for reading data from .dat files directly will likely not be accepted.
-
-This package is not intended to make it easy to read .dat files.
-It is intended to ensure that .dat files are read exactly once:
-so that they can be converted to a widely-supported, well-documented, self-documenting format (HDF5),
-and then deleted.
-ead .dat files.
-It is intended to ensure that .dat files are read exactly once:
-so that they can be converted to a widely-supported, well-documented, self-documenting format (HDF5),
-and then deleted.
-ntended to ensure that .dat files are read exactly once:
-so that they can be converted to a widely-supported, well-documented, self-documenting format (HDF5),
-and then deleted.
-nting format (HDF5),
-and then deleted.
-ead .dat files.
-It is intended to ensure that .dat files are read exactly once:
-so that they can be converted to a widely-supported, well-documented, self-documenting format (HDF5),
-and then deleted.
-ntended to ensure that .dat files are read exactly once:
-so that they can be converted to a widely-supported, well-documented, self-documenting format (HDF5),
-and then deleted.
-nted, self-documenting format (HDF5),
-and then deleted.
-nting format (HDF5),
-and then deleted.
-ead .dat files.
-It is intended to ensure that .dat files are read exactly once:
-so that they can be converted to a widely-supported, well-documented, self-documenting format (HDF5),
-and then deleted.
-ntended to ensure that .dat files are read exactly once:
-so that they can be converted to a widely-supported, well-documented, self-documenting format (HDF5),
-and then deleted.
-d, self-documenting format (HDF5),
-and then deleted.
-nting format (HDF5),
-and then deleted.
-ead .dat files.
-It is intended to ensure that .dat files are read exactly once:
-so that they can be converted to a widely-supported, well-documented, self-documenting format (HDF5),
-and then deleted.
-ntended to ensure that .dat files are read exactly once:
 so that they can be converted to a widely-supported, well-documented, self-documenting format (HDF5),
 and then deleted.
