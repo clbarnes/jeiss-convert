@@ -40,7 +40,10 @@ def datetime_from_path(dat_path: Path, datetime_pattern: str) -> dt.datetime:
     datetimes = set(dtm.extract_datetimes(datetime_pattern, str(dat_path)))
 
     if len(datetimes) != 1:
-        raise ValueError("Cannot match datetime, %s options found", len(datetimes))
+        raise ValueError(
+            f"Cannot match datetime, {len(datetimes)} options found "
+            "for pattern '{datetime_pattern}' in path '{dat_path}'"
+        )
 
     return datetimes.pop()
 
