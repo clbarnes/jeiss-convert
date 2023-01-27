@@ -294,7 +294,7 @@ from pathlib import Path
 import pandas as pd
 from jeiss_convert import dat_to_hdf5, get_csv_metadata, datetime_from_path
 
-dat_path = Path("path/to/data_2023-01-24_172320_0-0-0.dat)
+dat_path = Path("path/to/data_2023-01-24_172320_0-0-0.dat")
 metadata = pd.read_csv(Path("path/to/metadata.csv"))
 
 acquisition_datetime = datetime_from_path(
