@@ -143,7 +143,9 @@ class SpecTuple(tp.NamedTuple):
             except ValueError:
                 shape.append(item)
 
-        return cls(items["name"], np.dtype(items["dtype"]), int(items["offset"]), tuple(shape))
+        return cls(
+            items["name"], np.dtype(items["dtype"]), int(items["offset"]), tuple(shape)
+        )
 
     @classmethod
     def from_file(cls, path):
