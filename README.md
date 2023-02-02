@@ -42,7 +42,7 @@ e.g. `{"SWdate": "02/01/2023"}` (ambiguous, locale-dependent, not sortable) woul
 `{"SWdate": "02/01/2023", "SWdate__iso": "2023-01-02"}` (internationally standardised) in the output.
 
 Jeiss microscopes can output CSV files with additional metadata.
-This metadata can be stored as attributes on an empty group in the output HDF5,
+This metadata can be stored as attributes on an empty group called `additional_metadata` in the output HDF5,
 so long as the correct row can be found based on the .dat file's acquisition date.
 This can be given explicitly or parsed from file path.
 Again, the non-standard `Date` field and the `Time` field are used to create an additional
