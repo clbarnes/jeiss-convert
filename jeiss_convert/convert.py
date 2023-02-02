@@ -189,7 +189,7 @@ def main(args=None):
             "from the given file path; "
             "only used to match file to its entry in a metadata CSV. "
             "See here for more details: "
-            "https://github.com/stephen-zhao/datetime_matcher#dfregex-syntax-informal-spec . "
+            "https://github.com/stephen-zhao/datetime_matcher#dfregex-syntax-informal-spec . "  # noqa: E501
             "Mutually exclusive with --datetime (-d)."
         ),
     )

@@ -108,7 +108,7 @@ def hdf5_to_bytes(hdf5_path, hdf5_group=None) -> bytes:
         g = h5[hdf5_group]
         if not g.attrs.get(CONVERSION_COMPLETE_FIELD):
             logger.warning(
-                "'%s' flag missing; HDF5 was probably interrupted",
+                "'%s' flag missing; HDF5 was writing probably interrupted",
                 CONVERSION_COMPLETE_FIELD,
             )
         b = group_to_bytes(g)
