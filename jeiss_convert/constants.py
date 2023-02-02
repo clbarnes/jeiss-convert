@@ -1,0 +1,11 @@
+ISO_DATE_SUFFIX = "__iso"
+ENUM_NAME_SUFFIX = "__name"
+SUBGROUP_NAME = "additional_metadata"
+DATASET_PREFIX = "AI"
+
+VERSION_FIELD = "_dat2hdf5_version"
+HEADER_FIELD = "_header"
+FOOTER_FIELD = "_footer"
+CONVERSION_COMPLETE_FIELD = "_conversion_complete"
+DAT_NBYTES_FIELD = "_dat_nbytes"
+DAT_FILENAME_FIELD = "_dat_filename"

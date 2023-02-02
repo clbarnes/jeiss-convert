@@ -4,6 +4,7 @@ Verify that the contents of an HDF5 container are identical
 to an existing Jeiss FIBSEM .dat file,
 so that the .dat can be safely deleted.
 """
+import logging
 import sys
 from argparse import ArgumentParser
 from pathlib import Path
@@ -11,6 +12,8 @@ from pathlib import Path
 from .hdf5 import hdf5_to_bytes
 from .utils import md5sum
 from .version import version
+
+logger = logging.getLogger(__name__)
 
 
 def noop(arg):

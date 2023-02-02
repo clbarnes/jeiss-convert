@@ -6,6 +6,10 @@ preserving all known metadata as group attributes.
 Additionally stores the raw header and footer bytes as uint8 arrays
 (under keys "_header" and "_footer" respectively),
 the version string of the conversion tool ("_dat2hdf5_version").
+If the full contents of the .dat were written to HDF5 successfully,
+the field "_conversion_complete" will exist and be True.
+The length of the original .dat file is stored in "_dat_nbytes",
+and its filename or path can optionally be written in "_dat_filename".
 
 Each channel which exists is stored as a dataset within the group
 named "AI1", "AI2", ..., based on the original base-1 channel index
@@ -79,7 +83,6 @@ def parse_csv_metadata(
         return None
 
     elif datetime_pattern:
-
         datetime = datetime_from_path(dat_path, datetime_pattern)
 
     elif not datetime:
@@ -156,7 +159,7 @@ def main(args=None):
         type=Path,
         help=(
             "Path to metadata CSV. "
-            "Must be paired with --datetime (-d) or --datetime-pattern (-D) "
+            "Must be paired with either --datetime (-d) or --datetime-pattern (-D) "
             "so that the file can be matched to an entry."
         ),
     )
@@ -166,19 +169,41 @@ def main(args=None):
         type=dt.datetime.fromisoformat,
         help=(
             "Acquisition datetime in ISO-8601 format; "
-            "only used to match file to its entry in a metadata CSV"
+            "only used to match file to its entry in a metadata CSV. "
+            "Mutually exclusive with --datetime-pattern (-D)."
         ),
     )
     parser.add_argument(
         "--datetime-pattern",
         "-D",
         help=(
-            r"Dfregex (i.e. regex plus C-like date/time codes) "
-            "showing how to parse the acquisition date and time from the filename; "
+            "Dfregex (i.e. regex plus C-like date/time codes) "
+            "showing how to parse the acquisition date and time "
+            "from the given file path; "
             "only used to match file to its entry in a metadata CSV. "
             "See here for more details: "
-            "https://github.com/stephen-zhao/datetime_matcher"
-            "#dfregex-syntax-informal-spec"
+            "https://github.com/stephen-zhao/datetime_matcher#dfregex-syntax-informal-spec . "
+            "Mutually exclusive with --datetime (-d)."
+        ),
+    )
+    parser.add_argument(
+        "--store-name",
+        "-n",
+        action="count",
+        help=(
+            "Store dat's filename in resulting HDF5 group metadata under '_filename'."
+            "If used twice, store the given path. "
+            "If used three times, store the absolute path."
+        ),
+    )
+    parser.add_argument(
+        "--fill",
+        "-f",
+        type=int,
+        help=(
+            "If a file is truncated in the image section, "
+            "fill it with this value (must be valid for the file's data type). "
+            "If not given, raise an error on truncated files. "
         ),
     )
     parser.add_argument(
@@ -205,6 +230,14 @@ def main(args=None):
         parsed.dat, parsed.csv_path, parsed.datetime, parsed.datetime_pattern
     )
 
+    filename = None
+    if parsed.store_name == 1:
+        filename = parsed.dat.name
+    elif parsed.store_name == 2:
+        filename = str(parsed.dat)
+    elif parsed.store_name >= 3:
+        filename = str(parsed.dat.resolve())
+
     dat_to_hdf5(
         parsed.dat,
         parsed.hdf5,
@@ -212,6 +245,8 @@ def main(args=None):
         ds_kwargs=ds_kwargs,
         minmax=parsed.minmax,
         additional_metadata=meta,
+        filename=filename,
+        fill=parsed.fill,
     )
     return 0
 

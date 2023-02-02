@@ -4,12 +4,10 @@ from pathlib import Path
 
 import h5py
 
+from .constants import CONVERSION_COMPLETE_FIELD, DAT_FILENAME_FIELD, SUBGROUP_NAME
 from .utils import group_to_bytes, split_channels
 
 logger = logging.getLogger(__name__)
-
-
-SUBGROUP_NAME = "additional_metadata"
 
 
 def dat_to_hdf5(
@@ -19,6 +17,8 @@ def dat_to_hdf5(
     ds_kwargs: tp.Optional[dict[str, tp.Any]] = None,
     minmax: bool = False,
     additional_metadata: tp.Optional[dict[str, dict[str, tp.Any]]] = None,
+    filename: tp.Optional[str] = None,
+    fill: tp.Optional[int] = None,
 ):
     """Convert a dat file to an HDF5 file.
 
@@ -42,8 +42,14 @@ def dat_to_hdf5(
         A dict of attributes to be stored on an ``"additional_metadata"`` subgroup.
         This subgroup exists solely to store this additional metadata.
         If None (default), subgroup will not be created.
+    filename : str, optional
+        String to store under ``_filename`` attribute.
+        Not stored if None (default).
+    fill : int, optional
+        Integer to fill out image channels with if truncated.
+        If None (default), error instead.
     """
-    meta, channel_names, data = split_channels(dat_path)
+    meta, channel_names, data = split_channels(dat_path, fill=fill)
 
     if ds_kwargs is None:
         ds_kwargs = dict()
@@ -58,6 +64,8 @@ def dat_to_hdf5(
             g = h5.create_group(group_name)
 
         g.attrs.update(meta)
+        if filename is not None:
+            g.attrs[DAT_FILENAME_FIELD] = filename
 
         for idx, ds_name in enumerate(channel_names):
             arr = data[idx]
@@ -72,7 +80,7 @@ def dat_to_hdf5(
             g2.attrs.update(additional_metadata)
 
         h5.flush()
-        g.attrs["_is_complete"] = True
+        g.attrs[CONVERSION_COMPLETE_FIELD] = True
 
 
 def hdf5_to_bytes(hdf5_path, hdf5_group=None) -> bytes:
@@ -98,9 +106,11 @@ def hdf5_to_bytes(hdf5_path, hdf5_group=None) -> bytes:
 
     with h5py.File(hdf5_path) as h5:
         g = h5[hdf5_group]
-        if not g.attrs.get("_is_complete"):
+        if not g.attrs.get(CONVERSION_COMPLETE_FIELD):
             logger.warning(
-                "'_is_complete' flag missing; writing was probably interrupted"
+                "'%s' flag missing; HDF5 was probably interrupted",
+                CONVERSION_COMPLETE_FIELD,
             )
         b = group_to_bytes(g)
+
     return b

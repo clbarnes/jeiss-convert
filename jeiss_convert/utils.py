@@ -6,8 +6,18 @@ import typing as tp
 from io import BytesIO
 from pathlib import Path
 
+import h5py
 import numpy as np
 
+from jeiss_convert.constants import (
+    DAT_NBYTES_FIELD,
+    FOOTER_FIELD,
+    HEADER_FIELD,
+    ISO_DATE_SUFFIX,
+    VERSION_FIELD,
+)
+
+from .constants import DATASET_PREFIX, ENUM_NAME_SUFFIX
 from .misc import (
     DATE_FIELDS,
     DATE_FORMAT,
@@ -27,8 +37,6 @@ else:
 
 logger = logging.getLogger(__name__)
 
-ENUM_NAME_SUFFIX = "__name"
-DATASET_PREFIX = "AI"
 DEFAULT_NAME_ENUMS = True
 
 
@@ -47,10 +55,12 @@ def read_value(
     dtype: np.dtype,
     offset: int = 0,
     shape: tp.Optional[tuple[int, ...]] = None,
-    eof=EoFBehavior.ERROR,
+    fill=None,
 ):
     # assume no reshaping required (singleton or 1D)
     reshape = None
+
+    count: int
 
     if not shape:
         # read a single value
@@ -67,13 +77,21 @@ def read_value(
 
     data = np.frombuffer(buffer, dtype, count, offset=offset)
     if len(data) < count:
-        if eof == EoFBehavior.ERROR:
-            raise RuntimeError(f"Could not read {count} items from byte {offset}")
-        elif eof == EoFBehavior.WARN:
-            logger.warning("Could not read %s items from byte %s", count, offset)
-
-        # if not error, pad right with 0s
-        data = np.pad(data, [(0, count - len(data))])
+        if fill is None:
+            raise RuntimeError(
+                f"Could only read {len(data)} {dtype} from byte {offset}; "
+                f"expected {count}"
+            )
+        else:
+            logger.warning(
+                "Could only read %s %s from byte %s; expected %s. Padding with %s.",
+                len(data),
+                dtype,
+                offset,
+                count,
+                fill,
+            )
+            data = np.append(data, np.full(count - len(data), fill, dtype))
 
     if not shape:
         # want singleton
@@ -119,7 +137,7 @@ class SpecTuple(tp.NamedTuple):
     offset: int
     shape: tp.Optional[tuple[tp.Union[int, str], ...]]
 
-    def realise_shape(self, meta: dict[str, int]) -> tp.Optional[tuple[int]]:
+    def realise_shape(self, meta: dict[str, int]) -> tp.Optional[tuple[int, ...]]:
         if not self.shape or self.shape == (0,):
             return None
 
@@ -135,7 +153,7 @@ class SpecTuple(tp.NamedTuple):
     def from_line(cls, line: str, headers: list[str]):
         items = dict(zip(headers, line.strip().split("\t")))
 
-        shape = []
+        shape: list[tp.Union[str, int]] = []
         for item in items["shape"].split(","):
             item = item.strip()
             try:
@@ -224,7 +242,7 @@ def handle_dates(d: dict[str, tp.Any]) -> dict[str, tp.Any]:
         except ValueError:
             continue
 
-        to_add[k + "__iso"] = datetime.date().isoformat()
+        to_add[k + ISO_DATE_SUFFIX] = datetime.date().isoformat()
 
     d.update(to_add)
     return d
@@ -233,6 +251,7 @@ def handle_dates(d: dict[str, tp.Any]) -> dict[str, tp.Any]:
 def parse_bytes(b: bytes, name_enums=DEFAULT_NAME_ENUMS):
     d = _parse_with_version(b, 0, name_enums=name_enums)
     out = _parse_with_version(b, d["FileVersion"], name_enums=name_enums)
+    out[DAT_NBYTES_FIELD] = np.uint64(len(b))
     if name_enums:
         out = handle_dates(out)
     return out
@@ -265,13 +284,16 @@ class ParsedData(tp.NamedTuple):
 
     @classmethod
     def from_bytes(
-        cls, b: bytes, name_enums=DEFAULT_NAME_ENUMS, eof=EoFBehavior.default()
+        cls,
+        b: bytes,
+        name_enums=DEFAULT_NAME_ENUMS,
+        fill=None,
     ):
         meta = parse_bytes(b, name_enums=name_enums)
         header = b[:HEADER_LENGTH]
         shape = (meta["ChanNum"], meta["XResolution"], meta["YResolution"])
         dtype = np.dtype("u1" if meta["EightBit"] else ">i2")
-        data = read_value(b, dtype, HEADER_LENGTH, shape, eof)
+        data = read_value(b, dtype, HEADER_LENGTH, shape, fill=fill)
 
         footer_starts = int(HEADER_LENGTH + data.nbytes)
         if footer_starts >= len(b):
@@ -283,10 +305,13 @@ class ParsedData(tp.NamedTuple):
 
     @classmethod
     def from_file(
-        cls, fpath: Path, name_enums=DEFAULT_NAME_ENUMS, eof=EoFBehavior.default()
+        cls,
+        fpath: Path,
+        name_enums=DEFAULT_NAME_ENUMS,
+        fill=None,
     ):
         with open(fpath, "rb") as f:
-            return cls.from_bytes(f.read(), name_enums=name_enums, eof=eof)
+            return cls.from_bytes(f.read(), name_enums=name_enums, fill=fill)
 
     def header_hex(self) -> tp.Optional[str]:
         if self.header is None:
@@ -321,9 +346,9 @@ def split_channels(
     dat_path: Path,
     json_metadata=False,
     name_enums=DEFAULT_NAME_ENUMS,
-    eof=EoFBehavior.default(),
+    fill=None,
 ) -> tuple[dict[str, tp.Any], list[str], np.ndarray]:
-    all_data = ParsedData.from_file(dat_path, name_enums=name_enums, eof=eof)
+    all_data = ParsedData.from_file(dat_path, name_enums=name_enums, fill=fill)
     channel_names = []
     for input_id in range(1, 5):
         ds = f"{DATASET_PREFIX}{input_id}"
@@ -334,17 +359,17 @@ def split_channels(
     if json_metadata:
         meta = metadata_to_jso(all_data.meta)
         if all_data.header is not None:
-            meta["_header"] = all_data.header.hex()
+            meta[HEADER_FIELD] = all_data.header.hex()
         if all_data.footer is not None:
-            meta["_footer"] = all_data.footer.hex()
+            meta[FOOTER_FIELD] = all_data.footer.hex()
     else:
         meta = all_data.meta
         if all_data.header is not None:
-            meta["_header"] = np.frombuffer(all_data.header, "uint8")
+            meta[HEADER_FIELD] = np.frombuffer(all_data.header, "uint8")
         if all_data.footer is not None:
-            meta["_footer"] = np.frombuffer(all_data.footer, "uint8")
+            meta[FOOTER_FIELD] = np.frombuffer(all_data.footer, "uint8")
 
-    meta["_dat2hdf5_version"] = version
+    meta[VERSION_FIELD] = version
     return meta, channel_names, all_data.data
 
 
@@ -363,13 +388,14 @@ def get_bytes(d: dict[str, tp.Any], key: str):
     )
 
 
-def md5sum(b):
+def md5sum(b: bytes):
     md5 = hashlib.md5()
     md5.update(b)
     return md5.hexdigest()
 
 
-def group_to_bytes(g, json_metadata=False, check_header=True):
+def group_to_bytes(g: h5py.Group, json_metadata=False, check_header=True):
+    expected_len = g.attrs[DAT_NBYTES_FIELD]
     if json_metadata:
         meta = metadata_to_numpy(g.attrs)
     else:
@@ -377,13 +403,13 @@ def group_to_bytes(g, json_metadata=False, check_header=True):
 
     header = write_header(meta)
     if check_header:
-        stored_header = get_bytes(meta, "_header")
+        stored_header = get_bytes(meta, HEADER_FIELD)
         if stored_header and md5sum(stored_header) != md5sum(header):
             raise RuntimeError(
                 f"Stored header (length {len(stored_header)}) is different to "
                 f"calculated header (length {len(header)})"
             )
-    footer = get_bytes(meta, "_footer")
+    footer = get_bytes(meta, FOOTER_FIELD)
 
     to_stack = []
     for input_id in range(1, 5):
@@ -395,4 +421,13 @@ def group_to_bytes(g, json_metadata=False, check_header=True):
     stacked = np.stack(to_stack, axis=0)
     dtype = stacked.dtype.newbyteorder(DEFAULT_BYTE_ORDER)
     b = np.asarray(stacked, dtype, order="F").tobytes(order="F")
-    return header + b + footer
+    all_b = header + b + footer
+
+    if len(all_b) > expected_len:
+        logger.warning(
+            "Generated bytes longer than expected, "
+            "original .dat file was probably truncated."
+        )
+        all_b = all_b[:expected_len]
+
+    return all_b
