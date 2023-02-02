@@ -30,6 +30,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from jeiss_convert.constants import DAT_FILENAME_FIELD
+
 from .csvmeta import datetime_from_path, get_csv_metadata
 from .hdf5 import dat_to_hdf5
 from .version import version
@@ -100,7 +102,12 @@ def main(args=None):
     parser.add_argument("dat", type=Path, help="Path to a .dat file")
     parser.add_argument("hdf5", type=Path, help="Path to HDF5 file; may exist")
     parser.add_argument(
-        "group", nargs="?", help="HDF5 group within the given file; must not exist"
+        "group",
+        nargs="?",
+        help=(
+            "HDF5 group within the given file; must not exist. "
+            "If not given, use the root."
+        ),
     )
     parser.add_argument(
         "-m",
@@ -191,14 +198,15 @@ def main(args=None):
         "-n",
         action="count",
         help=(
-            "Store dat's filename in resulting HDF5 group metadata under '_filename'."
+            "Store dat's filename in resulting HDF5 group metadata "
+            f"under '{DAT_FILENAME_FIELD}'."
             "If used twice, store the given path. "
             "If used three times, store the absolute path."
         ),
     )
     parser.add_argument(
         "--fill",
-        "-f",
+        "-F",
         type=int,
         help=(
             "If a file is truncated in the image section, "

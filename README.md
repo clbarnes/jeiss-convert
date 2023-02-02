@@ -53,28 +53,33 @@ Again, the non-standard `Date` field and the `Time` field are used to create an 
 ```_dat2hdf5
 usage: dat2hdf5 [-h] [-m] [-c CHUNKS] [-z COMPRESSION] [-B] [-o] [-f]
                 [--csv-path CSV_PATH] [--datetime DATETIME]
-                [--datetime-pattern DATETIME_PATTERN] [--version]
+                [--datetime-pattern DATETIME_PATTERN] [--store-name]
+                [--fill FILL] [--version]
                 dat hdf5 [group]
 
 Convert a Jeiss FIBSEM .dat file into a standard HDF5 group (which may be the
 container's root), preserving all known metadata as group attributes.
 Additionally stores the raw header and footer bytes as uint8 arrays (under
 keys "_header" and "_footer" respectively), the version string of the
-conversion tool ("_dat2hdf5_version"). Each channel which exists is stored as
-a dataset within the group named "AI1", "AI2", ..., based on the original
-base-1 channel index ("AI" stands for "Analogue Input"). Channel datasets
-optionally store the minimum and maximum values as attributes "min" and "max".
-Datasets may optionally be chunked, compressed, and/or have other filters
-applied. Lastly, additional metadata from a CSV indexed by acquisition date
-and time can be included as attributes on an empty "additional_metadata"
-subgroup.
+conversion tool ("_dat2hdf5_version"). If the full contents of the .dat were
+written to HDF5 successfully, the field "_conversion_complete" will exist and
+be True. The length of the original .dat file is stored in "_dat_nbytes", and
+its filename or path can optionally be written in "_dat_filename". Each
+channel which exists is stored as a dataset within the group named "AI1",
+"AI2", ..., based on the original base-1 channel index ("AI" stands for
+"Analogue Input"). Channel datasets optionally store the minimum and maximum
+values as attributes "min" and "max". Datasets may optionally be chunked,
+compressed, and/or have other filters applied. Lastly, additional metadata
+from a CSV indexed by acquisition date and time can be included as attributes
+on an empty "additional_metadata" subgroup.
 
 positional arguments:
   dat                   Path to a .dat file
   hdf5                  Path to HDF5 file; may exist
-  group                 HDF5 group within the given file; must not exist
+  group                 HDF5 group within the given file; must not exist. If
+                        not given, use the root.
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -m, --minmax          Calculate each array's min and max values and store as
                         attributes
@@ -91,19 +96,28 @@ optional arguments:
                         of chunked data.
   -f, --fletcher32      Checksum each chunk to allow detection of corruption
   --csv-path CSV_PATH, -p CSV_PATH
-                        Path to metadata CSV. Must be paired with --datetime
-                        (-d) or --datetime-pattern (-D) so that the file can
-                        be matched to an entry.
+                        Path to metadata CSV. Must be paired with either
+                        --datetime (-d) or --datetime-pattern (-D) so that the
+                        file can be matched to an entry.
   --datetime DATETIME, -d DATETIME
                         Acquisition datetime in ISO-8601 format; only used to
-                        match file to its entry in a metadata CSV
+                        match file to its entry in a metadata CSV. Mutually
+                        exclusive with --datetime-pattern (-D).
   --datetime-pattern DATETIME_PATTERN, -D DATETIME_PATTERN
                         Dfregex (i.e. regex plus C-like date/time codes)
                         showing how to parse the acquisition date and time
-                        from the filename; only used to match file to its
-                        entry in a metadata CSV. See here for more details:
-                        https://github.com/stephen-
-                        zhao/datetime_matcher#dfregex-syntax-informal-spec
+                        from the given file path; only used to match file to
+                        its entry in a metadata CSV. See here for more
+                        details: https://github.com/stephen-
+                        zhao/datetime_matcher#dfregex-syntax-informal-spec .
+                        Mutually exclusive with --datetime (-d).
+  --store-name, -n      Store dat's filename in resulting HDF5 group metadata
+                        under '_dat_filename'.If used twice, store the given
+                        path. If used three times, store the absolute path.
+  --fill FILL, -F FILL  If a file is truncated in the image section, fill it
+                        with this value (must be valid for the file's data
+                        type). If not given, raise an error on truncated
+                        files.
   --version             show program's version number and exit
 ```
 
@@ -122,7 +136,7 @@ positional arguments:
   group             HDF5 group within the given file, default root; otherwise
                     must not exist
 
-optional arguments:
+options:
   -h, --help        show this help message and exit
   -d, --delete-dat  Delete the .dat file if the check succeeds
   -s, --strict      Check for identity of bytes rather than hash (slow and
@@ -140,7 +154,7 @@ usage: datmeta [-h] {ls,fmt,json,get} ...
 
 Interrogate and dump Jeiss FIBSEM .dat metadata.
 
-optional arguments:
+options:
   -h, --help         show this help message and exit
 
 subcommands:
@@ -157,7 +171,7 @@ List metadata field names.
 positional arguments:
   dat         Path to .dat file
 
-optional arguments:
+options:
   -h, --help  show this help message and exit
 ```
 
@@ -172,9 +186,9 @@ If multiple format strings are given, print each separated by newlines.
 positional arguments:
   dat         Path to .dat file
   format      Format string, e.g. 'Version is {FileVersion}'. More details at
-              https://docs.python.org/3.9/library/string.html#formatstrings.
+              https://docs.python.org/3.10/library/string.html#formatstrings.
 
-optional arguments:
+options:
   -h, --help  show this help message and exit
 ```
 
@@ -189,7 +203,7 @@ positional arguments:
   dat                   Path to .dat file
   field                 Only dump the listed fields.
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -s, --sort            Sort JSON keys
   -i INDENT, --indent INDENT
@@ -209,7 +223,7 @@ positional arguments:
   dat              Path to .dat file
   field            Only show the given fields
 
-optional arguments:
+options:
   -h, --help       show this help message and exit
   -d, --data-only  Do not print field names
 ```
@@ -284,7 +298,10 @@ with ProcessPoolExecutor(N_PROCESSES) as p:
         pass
 ```
 
-There are additional helper methods for reading metadata from a pandas.DataFrame.
+Jeiss microscopes can generate CSV files containing additional metadata.
+These can be matched to a .dat file based on the acquisition date and time.
+
+This package contains helper methods for matching a .dat's acquisition datetime to a row of a `pandas.DataFrame` representing these CSVs.
 DataFrames must have string `"Date"` and `"Time"` columns
 in `dd/mm/YYYY` and `HH:MM:SS` format respectively.
 
@@ -300,6 +317,7 @@ metadata = pd.read_csv(Path("path/to/metadata.csv"))
 
 acquisition_datetime = datetime_from_path(
     dat_path,
+    # Dfregex pattern for parsing datetime from file path
     r".*/data_%Y-%m-%d_%H%M%S_\d+-\d+-\d+\.dat$",
 )
 
