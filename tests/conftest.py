@@ -32,7 +32,7 @@ def sample_dats():
 @pytest.fixture(params=versions)
 def dat_path(request, sample_dats):
     if request.config.getoption("--skip-full"):
-        pytest.skip("Requires full .dat file, --skip-large given")
+        pytest.skip("Requires full .dat file, --skip-full given")
 
     version = request.param
     if version not in sample_dats:

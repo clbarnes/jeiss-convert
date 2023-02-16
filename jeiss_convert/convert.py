@@ -197,6 +197,7 @@ def main(args=None):
         "--store-name",
         "-n",
         action="count",
+        default=0,
         help=(
             "Store dat's filename in resulting HDF5 group metadata "
             f"under '{DAT_FILENAME_FIELD}'."
