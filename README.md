@@ -41,6 +41,9 @@ Additionally, date fields (listed and serialised according to the format specifi
 e.g. `{"SWdate": "02/01/2023"}` (ambiguous, locale-dependent, not sortable) would be represented as
 `{"SWdate": "02/01/2023", "SWdate__iso": "2023-01-02"}` (internationally standardised) in the output.
 
+Depending on the file, certain channels may or may not be present.
+The names of existing channels are stored in an attribute called `AINames`.
+
 Jeiss microscopes can output CSV files with additional metadata.
 This metadata can be stored as attributes on an empty group called `additional_metadata` in the output HDF5,
 so long as the correct row can be found based on the .dat file's acquisition date.
@@ -59,19 +62,19 @@ usage: dat2hdf5 [-h] [-m] [-c CHUNKS] [-z COMPRESSION] [-B] [-o] [-f]
 
 Convert a Jeiss FIBSEM .dat file into a standard HDF5 group (which may be the
 container's root), preserving all known metadata as group attributes.
-Additionally stores the raw header and footer bytes as uint8 arrays (under
-keys "_header" and "_footer" respectively), the version string of the
-conversion tool ("_dat2hdf5_version"). If the full contents of the .dat were
-written to HDF5 successfully, the field "_conversion_complete" will exist and
-be True. The length of the original .dat file is stored in "_dat_nbytes", and
-its filename or path can optionally be written in "_dat_filename". Each
-channel which exists is stored as a dataset within the group named "AI1",
-"AI2", ..., based on the original base-1 channel index ("AI" stands for
-"Analogue Input"). Channel datasets optionally store the minimum and maximum
-values as attributes "min" and "max". Datasets may optionally be chunked,
-compressed, and/or have other filters applied. Lastly, additional metadata
-from a CSV indexed by acquisition date and time can be included as attributes
-on an empty "additional_metadata" subgroup.
+Additionally stores the version string of the conversion tool
+("_dat2hdf5_version"). If the full contents of the .dat were written to HDF5
+successfully, the field "_conversion_complete" will exist and be True. The
+length of the original .dat file is stored in "_dat_nbytes", and its filename
+or path can optionally be written in "_dat_filename". Each channel which
+exists is stored as a dataset within the group named "AI1", "AI2", ..., based
+on the original base-1 channel index ("AI" stands for "Analogue Input").
+Channel datasets optionally store the minimum and maximum values as attributes
+"min" and "max". Datasets may optionally be chunked, compressed, and/or have
+other filters applied. Also stores the raw header and footer bytes as uint8
+array datasets (under names "_header" and "_footer" respectively), Lastly,
+additional metadata from a CSV indexed by acquisition date and time can be
+included as attributes on an empty "additional_metadata" subgroup.
 
 positional arguments:
   dat                   Path to a .dat file

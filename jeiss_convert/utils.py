@@ -3,6 +3,7 @@ import hashlib
 import logging
 import sys
 import typing as tp
+from collections.abc import Mapping
 from io import BytesIO
 from pathlib import Path
 
@@ -11,10 +12,9 @@ import numpy as np
 
 from jeiss_convert.constants import (
     DAT_NBYTES_FIELD,
-    FOOTER_FIELD,
-    HEADER_FIELD,
+    FOOTER_DS,
+    HEADER_DS,
     ISO_DATE_SUFFIX,
-    VERSION_FIELD,
 )
 
 from .constants import DATASET_PREFIX, ENUM_NAME_SUFFIX
@@ -27,7 +27,6 @@ from .misc import (
     HEADER_LENGTH,
     SPEC_DIR,
 )
-from .version import version
 
 if sys.version_info < (3, 11):
     from backports.strenum import StrEnum
@@ -263,7 +262,7 @@ def parse_file(fpath: Path, name_enums=DEFAULT_NAME_ENUMS):
         return parse_bytes(b, name_enums=name_enums)
 
 
-def write_header(data: dict[str, tp.Any]):
+def write_header(data: Mapping[str, tp.Any]):
     buffer = BytesIO(b"\0" * HEADER_LENGTH)
     for name, dtype, offset, _ in SPECS[data["FileVersion"]]:
         item = data[name]
@@ -279,8 +278,8 @@ def write_header(data: dict[str, tp.Any]):
 class ParsedData(tp.NamedTuple):
     meta: dict[str, tp.Any]
     data: np.ndarray
-    header: tp.Optional[bytes] = None
-    footer: tp.Optional[bytes] = None
+    header: bytes = b""
+    footer: bytes = b""
 
     @classmethod
     def from_bytes(
@@ -296,10 +295,7 @@ class ParsedData(tp.NamedTuple):
         data = read_value(b, dtype, HEADER_LENGTH, shape, fill=fill)
 
         footer_starts = int(HEADER_LENGTH + data.nbytes)
-        if footer_starts >= len(b):
-            footer = None
-        else:
-            footer = b[footer_starts:]
+        footer = b[footer_starts:]
 
         return cls(meta, data, header, footer)
 
@@ -312,16 +308,6 @@ class ParsedData(tp.NamedTuple):
     ):
         with open(fpath, "rb") as f:
             return cls.from_bytes(f.read(), name_enums=name_enums, fill=fill)
-
-    def header_hex(self) -> tp.Optional[str]:
-        if self.header is None:
-            return None
-        return self.header.hex()
-
-    def footer_hex(self) -> tp.Optional[str]:
-        if self.footer is None:
-            return None
-        return self.footer.hex()
 
 
 def metadata_to_jso(meta: dict[str, tp.Any]) -> dict[str, tp.Any]:
@@ -342,50 +328,39 @@ def metadata_to_numpy(meta: dict[str, tp.Any]) -> dict[str, tp.Any]:
     return out
 
 
-def split_channels(
-    dat_path: Path,
-    json_metadata=False,
-    name_enums=DEFAULT_NAME_ENUMS,
-    fill=None,
-) -> tuple[dict[str, tp.Any], list[str], np.ndarray]:
-    all_data = ParsedData.from_file(dat_path, name_enums=name_enums, fill=fill)
+def get_channel_names(meta):
     channel_names = []
     for input_id in range(1, 5):
         ds = f"{DATASET_PREFIX}{input_id}"
 
-        if all_data.meta[ds]:
+        if meta[ds]:
             channel_names.append(ds)
 
-    if json_metadata:
-        meta = metadata_to_jso(all_data.meta)
-        if all_data.header is not None:
-            meta[HEADER_FIELD] = all_data.header.hex()
-        if all_data.footer is not None:
-            meta[FOOTER_FIELD] = all_data.footer.hex()
-    else:
-        meta = all_data.meta
-        if all_data.header is not None:
-            meta[HEADER_FIELD] = np.frombuffer(all_data.header, "uint8")
-        if all_data.footer is not None:
-            meta[FOOTER_FIELD] = np.frombuffer(all_data.footer, "uint8")
-
-    meta[VERSION_FIELD] = version
-    return meta, channel_names, all_data.data
+    return channel_names
 
 
-def get_bytes(d: dict[str, tp.Any], key: str):
-    val = d.get(key)
+def as_bytes(val: tp.Optional[tp.Union[np.ndarray, str, bytes]]) -> bytes:
     if val is None:
         return b""
-
-    if isinstance(val, str):
+    elif isinstance(val, bytes):
+        return val
+    elif isinstance(val, str):
         return bytes.fromhex(val)
-    elif isinstance(val, np.ndarray):
+
+    if isinstance(val, h5py.Dataset):
+        val = val[:]
+
+    if isinstance(val, np.ndarray):
         return val.tobytes()
+
     raise ValueError(
         "Expected str (hex-encoded) or numpy array "
         f"to convert into bytes, got {type(val)}"
     )
+
+
+def get_bytes(d: dict[str, tp.Any], key: str):
+    return as_bytes(d.get(key))
 
 
 def md5sum(b: bytes):
@@ -403,13 +378,14 @@ def group_to_bytes(g: h5py.Group, json_metadata=False, check_header=True):
 
     header = write_header(meta)
     if check_header:
-        stored_header = get_bytes(meta, HEADER_FIELD)
+        stored_header = as_bytes(g.get(HEADER_DS))
         if stored_header and md5sum(stored_header) != md5sum(header):
             raise RuntimeError(
                 f"Stored header (length {len(stored_header)}) is different to "
                 f"calculated header (length {len(header)})"
             )
-    footer = get_bytes(meta, FOOTER_FIELD)
+
+    footer = as_bytes(g.get(FOOTER_DS))
 
     to_stack = []
     for input_id in range(1, 5):

@@ -3,9 +3,19 @@ import typing as tp
 from pathlib import Path
 
 import h5py
+import numpy as np
 
-from .constants import CONVERSION_COMPLETE_FIELD, DAT_FILENAME_FIELD, SUBGROUP_NAME
-from .utils import group_to_bytes, split_channels
+from .constants import (
+    CHANNEL_NAMES_FIELD,
+    CONVERSION_COMPLETE_FIELD,
+    DAT_FILENAME_FIELD,
+    FOOTER_DS,
+    HEADER_DS,
+    SUBGROUP_NAME,
+    VERSION_FIELD,
+)
+from .utils import ParsedData, get_channel_names, group_to_bytes
+from .version import __version__
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +59,13 @@ def dat_to_hdf5(
         Integer to fill out image channels with if truncated.
         If None (default), error instead.
     """
-    meta, channel_names, data = split_channels(dat_path, fill=fill)
+    all_data = ParsedData.from_file(dat_path, fill=fill)
+    meta = all_data.meta.copy()
+    data = all_data.data
+
+    channel_names = get_channel_names(meta)
+    meta[CHANNEL_NAMES_FIELD] = channel_names
+    meta[VERSION_FIELD] = __version__
 
     if ds_kwargs is None:
         ds_kwargs = dict()
@@ -67,6 +83,8 @@ def dat_to_hdf5(
         if filename is not None:
             g.attrs[DAT_FILENAME_FIELD] = filename
 
+        g.create_dataset(HEADER_DS, data=np.frombuffer(all_data.header, dtype="uint8"))
+
         for idx, ds_name in enumerate(channel_names):
             arr = data[idx]
             ds = g.create_dataset(ds_name, data=arr, **ds_kwargs)
@@ -74,6 +92,9 @@ def dat_to_hdf5(
             if minmax:
                 ds.attrs["min"] = arr.min()
                 ds.attrs["max"] = arr.max()
+
+        # todo: store offset at which recipe starts?
+        g.create_dataset(FOOTER_DS, data=np.frombuffer(all_data.footer, dtype="uint8"))
 
         if additional_metadata is not None:
             g2 = g.create_group(SUBGROUP_NAME)
